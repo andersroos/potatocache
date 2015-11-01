@@ -1,4 +1,0 @@
-
-class PotatoCache(object):
-    pass
-    
