@@ -27,7 +27,8 @@
 *.out
 *.app
 
-#
+# Other stuff
 build
 dist
 *.egg-info
+.idea

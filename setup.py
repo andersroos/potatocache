@@ -94,5 +94,5 @@ setup(
     #         'sample=sample:main',
     #     ],
     # },
-    ext_modules=[Extension('potatocache.cache', sources=['potatocache/cachemodule.c'])]
+    ext_modules=[Extension('potatocache.cache', language='c++', sources=['potatocache/cachemodule.cpp'])]
 )
