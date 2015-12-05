@@ -2,23 +2,22 @@
 #ifndef POTATOCACHE_POTATOCACHE_HPP
 #define POTATOCACHE_POTATOCACHE_HPP
 
-namespace potatocache {
+#include <stdint.h>
+#include <string>
 
-   uint32_t UNLIMITED = 0;
-   uint32_t USE_DEFAULT = 0xDEFA;
+// See 9a0617dd8a259b6eda06c3fa8949f1c86231fe9a for full api sketch.
+
+namespace potatocache {
    
    // Configration object for the cache (0 means unlimited unless othervise stated).
    struct config {
-      config()
-         : default_soft_timeout_us(UNLIMITED),
-           default_hard_timeout_us(UNLIMITED),
-           default_stale_update_timeout_us(2e6),  // Time before first stale response until next client get stale flag.
-           initial_count(1024),
-           max_count(UNLIMITED),
-           memory_segment_size(2 * 1024 * 1024),
-           initial_memory_segment_count(1),
-           max_memory_segment_count(UNLIMITED)
+      config() :
+         max_size(1024),
+         memory_segment_size(2 * 1024 * 1024)
       {}
+      
+      uint64_t max_size;
+      uint64_t memory_segment_size;
    };
 
    // Main api class for communicating with potatocache. All methods are atomic if not othervise stated and may safely
@@ -38,37 +37,22 @@ namespace potatocache {
       //
       // key: the key for the value
       //
-      // stale_out: set to true if the getter is supposed to calculate a new value, when stale the first getter of the
-      //            key will get stale_out=true, the subsequent getters will get stale_out=false unless
-      //            stale_update_timout_us has passed
+      // missing_out: set to true if key does not exist in cache, otherwise set to false
       //
-      // stale_us_out: number of micro seconds the entry have been stale for (soft timeouted), 0 if not stale, this
-      //               value is not affected by stale_out flag, so when stale stale_us_out will be > 0 but stale_out may
-      //               be false if someone did a call and received stale_out=true
-      //
-      // missing_out: set to true if the key was not present in the cache
-      //
-      // returns: the value, will be empty if missing_out == true
-      std::string get(const std::string& key);
+      // returns: the value, will be empty string if missing_out == true
+      std::string get(const std::string& key,
+                      bool& missing_out);
 
       // Put value into cache.
       //
-      // key: the key for the value TODO key max size
+      // key: the key for the value
       //
-      // value: the value to put into the cache TODO size configration
+      // value: the value to put into the cache
       //
-      // soft_timeout_us: time after put when entry becomes stale (see get)
-      //
-      // hard_timeout_us: time after when entru is removed from cache
-      //
-      // stale_update_timout_us: when stale, time after the get caller gets stale_out=true until the next caller will
-      //                         get stale_out=true, i.e. the time the first caller got to renew the entry
+      // throws: potatocache::exception if key or value are too large or if cache is full
       void put(const std::string& key,
-               const std::string& value,
-               uint64_t soft_timeout_us=USE_DEFAULT,
-               uint64_t hard_timeout_us=USE_DEFAULT,
-               uint64_t stale_update_timeout_us=USE_DEFAULT);
-      
+               const std::string& value);
+
    private:
    };
    
