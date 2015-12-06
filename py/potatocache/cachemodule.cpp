@@ -4,24 +4,27 @@
 #include "shared.hpp"
 
 static PyObject *
-cache_out(PyObject *self, PyObject *args)
+create(PyObject *self, PyObject *args)
 {
-    const char *out;
+    const char *name;
 
-    if (!PyArg_ParseTuple(args, "s", &out)) {
+    if (!PyArg_ParseTuple(args, "s", &name)) {
         return NULL;
     }
 
-    printf("%s\n", out);
+    printf("%s\n", name);
     printf("%lu\n", sizeof(potatocache::block));
     printf("%lu\n", sizeof(potatocache::hash_entry));
     printf("%lu\n", sizeof(potatocache::mem_header));
+
+    potatocache::config config;
+    potatocache::api cache(name, config);
     
     Py_RETURN_NONE;
 }
 
 static PyMethodDef CacheMethods[] = {
-    {"out",  cache_out, METH_VARARGS, "Print on stdout."},
+    {"create",  create, METH_VARARGS, "Create or connect to cahe."},
     {NULL, NULL, 0, NULL}
 };
 

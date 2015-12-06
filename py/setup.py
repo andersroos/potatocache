@@ -104,5 +104,9 @@ setup(
                            sources=[
                                'potatocache/cachemodule.cpp',
                                '../core/potatocache.cpp',
-                           ])]
+                           ],
+                           libraries=[
+                               'rt',
+                           ],
+                       )]
 )

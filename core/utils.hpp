@@ -1,0 +1,37 @@
+#ifndef POTATOCACHE_UTILS_HPP
+#define POTATOCACHE_UTILS_HPP
+
+#include <string.h>
+#include <stdarg.h>
+#include <sys/time.h>
+#include <sstream>
+#include "exceptions.hpp"
+
+std::string fmt(const char* format, ...)
+{
+   va_list args;
+   va_start(args, format);
+
+   size_t len = strlen(format);
+   
+   char message[len + (1<<16)];
+
+   int res = vsnprintf(message, sizeof(message), format, args);
+   message[sizeof(message) - 1] = 0;
+
+   if (res < 0 or uint32_t(res) >= sizeof(message) - 1) {
+      throw base_exception() << "fmt failed, total mesage too large or other error";
+   }
+
+   va_end(args);
+
+   return std::string(message);
+}
+
+uint64_t now_us() {
+   timeval now;
+   gettimeofday(&now, 0);
+   return now.tv_sec * 1000000 + now.tv_usec;
+}
+
+#endif
