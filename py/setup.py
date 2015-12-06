@@ -95,6 +95,12 @@ setup(
     #     ],
     # },
     ext_modules=[Extension('potatocache.cache', language='c++',
+                           include_dirs=[
+                               '../core',
+                           ],
+                           extra_compile_args=[
+                               '-std=c++11',
+                           ],
                            sources=[
                                'potatocache/cachemodule.cpp',
                                '../core/potatocache.cpp',

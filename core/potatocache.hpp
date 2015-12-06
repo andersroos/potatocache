@@ -7,17 +7,17 @@
 
 // See 9a0617dd8a259b6eda06c3fa8949f1c86231fe9a for full api sketch.
 
+// The contents of this file is considered public api, the rest of the code is not.
 namespace potatocache {
    
    // Configration object for the cache (0 means unlimited unless othervise stated).
    struct config {
-      config() :
-         max_size(1024),
-         memory_segment_size(2 * 1024 * 1024)
-      {}
       
-      uint64_t max_size;
-      uint64_t memory_segment_size;
+      // Size in number of entries.
+      uint64_t size = 1024;
+      
+      // Size of the shared mem segment to use for the chache.
+      uint64_t memory_segment_size = 2 * 1024 * 1024;
    };
 
    // Main api class for communicating with potatocache. All methods are atomic if not othervise stated and may safely
@@ -54,6 +54,9 @@ namespace potatocache {
                const std::string& value);
 
    private:
+      
+      std::string _name;
+      config _config;
    };
    
 }

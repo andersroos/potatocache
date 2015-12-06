@@ -1,6 +1,7 @@
 
 #include <Python.h>
-
+#include "potatocache.hpp"
+#include "shared.hpp"
 
 static PyObject *
 cache_out(PyObject *self, PyObject *args)
@@ -12,17 +13,17 @@ cache_out(PyObject *self, PyObject *args)
     }
 
     printf("%s\n", out);
+    printf("%lu\n", sizeof(potatocache::block));
+    printf("%lu\n", sizeof(potatocache::hash_entry));
+    printf("%lu\n", sizeof(potatocache::mem_header));
     
     Py_RETURN_NONE;
 }
-
-
 
 static PyMethodDef CacheMethods[] = {
     {"out",  cache_out, METH_VARARGS, "Print on stdout."},
     {NULL, NULL, 0, NULL}
 };
-
 
 static struct PyModuleDef cachemodule = {
    PyModuleDef_HEAD_INIT,
