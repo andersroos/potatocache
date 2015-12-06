@@ -57,6 +57,7 @@ namespace potatocache {
       
       std::string _name;
       config _config;
+      void* _mem;
    };
    
 }

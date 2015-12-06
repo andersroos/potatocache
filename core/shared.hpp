@@ -9,10 +9,10 @@ namespace potatocache {
    struct block {
 
       // Pointer to next block, null if no more blocks in value.
-      block* next_block;
+      uint64_t next_block_offset;
 
       // The value in the block, no termination char.
-      char data[1024 - sizeof(block*)]; 
+      char data[1024 - sizeof(uint64_t)]; 
    };
 
    // A hash table entry.
@@ -24,8 +24,8 @@ namespace potatocache {
       // The full key (0 terminated string -> max length 31 chars).
       char key[32];
 
-      // Pointer to value.
-      block* value;
+      // Offset of value block.
+      uint64_t value_offset;
 
       // The size of the value in chars.
       uint32_t value_size;
@@ -51,8 +51,8 @@ namespace potatocache {
       // Number of free blocks.
       uint32_t blocks_free;
 
-      // First free block pointer, null if no free blocks.
-      block* free_block;
+      // First free block offset, 0 if no free blocks.
+      uint64_t free_block_offset;
    };
 }
 
