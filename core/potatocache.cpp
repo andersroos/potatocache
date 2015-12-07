@@ -16,6 +16,9 @@ namespace potatocache {
       _name(name),
       _config(config)
    {
+      // TODO Move platform specific code to helper class to be able to easily be compatible with other platforms
+      // (boost maybe).
+      
       // TODO Name should start with '/', contain no other '/' and be max 255 chars.
 
       int fd = shm_open(name.c_str(), O_RDWR | O_CREAT, 0700);
