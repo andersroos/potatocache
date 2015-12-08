@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <string>
 
+#include "os.hpp"
+
 // See 9a0617dd8a259b6eda06c3fa8949f1c86231fe9a for full api sketch.
 
 // The contents of this file is considered public api, the rest of the code is not.
@@ -54,10 +56,9 @@ namespace potatocache {
                const std::string& value);
 
    private:
-      
-      std::string _name;
+
+      shm _shm;
       config _config;
-      void* _mem;
    };
    
 }
