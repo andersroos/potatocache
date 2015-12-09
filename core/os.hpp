@@ -14,7 +14,7 @@ namespace potatocache {
    struct shm
    {
       // Create a shm object with a name.
-      shm(const std::string& name) : _name(name), _fd(-1), _mem(NULL), _size(0) {}
+      shm(const std::string& name);
       
       // Create shared memory.
       //
@@ -38,8 +38,8 @@ namespace potatocache {
       void unlock();
 
       // Get a object pointer based on a byte.
-      template<class T>       
-      T* operator[](uint64_t byte_offset);
+      template<class T>
+      T* ref(uint64_t byte_offset) { return reinterpret_cast<T*>(_mem + byte_offset); }
       
       virtual ~shm() {};
       
@@ -47,9 +47,10 @@ namespace potatocache {
 
       std::string _name;
       int _fd;
-      void* _mem;
+      char* _mem;
       uint64_t _size;
    };
+
 }
 
 #endif
