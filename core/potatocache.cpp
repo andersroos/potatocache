@@ -20,8 +20,18 @@ namespace potatocache {
       _config(config)
    {
       // TODO Name should start with '/', contain no other '/' and be max 255 chars, check it.
-      
-      _shm.create(config.memory_segment_size);
+
+      while (true) {
+         if (_shm.open()) {
+            // TODO Check size.
+            cerr << "opened" << endl;
+            break;
+         }
+         if (_shm.create(config.memory_segment_size)) {
+            cerr << "created" << endl;
+            break;
+         }
+      }
       
       // TODO Created or connected? How to know if structures should be initied. C++ init possible?
 

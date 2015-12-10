@@ -1,4 +1,5 @@
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -19,23 +20,50 @@ namespace potatocache {
       }
    }
 
-   void shm::create(uint64_t size)
+   bool shm::create(uint64_t size)
    {
-      _fd = shm_open(_name.c_str(), O_RDWR | O_CREAT, 0700);
-      if (_fd < 0) {
-         // TODO Better exceptions.
-         throw os_exception() << fmt("failed to open/create shared memory section %s, errno %d", _name.c_str(), errno);
+      int fd = shm_open(_name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0700);
+      if (fd < 0) {
+         if (errno == EEXIST) {
+            return false;
+         }
+         
+         throw os_exception() << fmt("failed to create shared memory section %s, errno %d", _name.c_str(), errno);
       }
 
-      if (ftruncate(_fd, size) < 0) {
+      if (ftruncate(fd, size) < 0) {
+         shm_unlink(_name.c_str());
          throw base_exception() << fmt("failed to set size of shared object, errno %d", _name.c_str(), errno);
       }
-      cerr << "size is " << size << endl;
-      
-      // TODO Check for min size.
-      _mem = static_cast<char*>(mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, 0));
 
-      cerr << "mem is " << _mem << " data is " << *reinterpret_cast<uint64_t*>(_mem) << endl;
+      _mem = static_cast<char*>(mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+      _fd = fd;
+
+      return true;
+   }
+
+   bool shm::open()
+   {
+      int fd = shm_open(_name.c_str(), O_RDWR, 0700);
+      if (fd < 0) {
+         if (errno == ENOENT) {
+            return false;
+         }
+         throw os_exception() << fmt("failed to open shared memory section %s, errno %d", _name.c_str(), errno);
+      }
+
+      // TODO Is there a timing issue here if other thread is between create and ftruncate? Fail if stat is below
+      // threshold? Time to start c++ unittests I think.
+      
+      struct stat s;
+      if (fstat(fd, &s) < 0) {
+         throw os_exception() << fmt("failed to stat shared memory section %s, errno %d", _name.c_str(), errno);
+      }
+      
+      _mem = static_cast<char*>(mmap(NULL, s.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+      _fd = fd;
+      
+      return true;
    }
 }
 

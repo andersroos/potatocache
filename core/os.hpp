@@ -20,13 +20,17 @@ namespace potatocache {
       //
       // size: size in bytes
       //
+      // returns: true if created (and opened), false if already existed
+      //
       // throws: os_exception if already exists or if failed to create
-      void create(uint64_t size);
+      bool create(uint64_t size);
    
       // Open existing shared memory.
       //
-      // throws: os_exception if does not exist or failed to open
-      void open();
+      // returns: true if opened, false if it did not exist
+      //
+      // throws: os_exception if it failed to open
+      bool open();
 
       // Destroy shared memory section.
       void remove();
