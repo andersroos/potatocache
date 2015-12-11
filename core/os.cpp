@@ -53,7 +53,7 @@ namespace potatocache {
       }
 
       // TODO Is there a timing issue here if other thread is between create and ftruncate? Fail if stat is below
-      // threshold? Time to start c++ unittests I think.
+      // threshold? Time to start c++ unittests I think. Use mutex to fix this?
       
       struct stat s;
       if (fstat(fd, &s) < 0) {
