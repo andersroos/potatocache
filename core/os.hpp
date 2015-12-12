@@ -2,6 +2,8 @@
 #ifndef POTATOCACHE_OS_HPP
 #define POTATOCACHE_OS_HPP
 
+#include <stdint.h>
+
 #include "exceptions.hpp"
 
 // Abstraction of shared memory and locks for easier conversion to other os with boost or whatever later.

@@ -24,6 +24,8 @@ public:
       return _what.c_str();
    }
 
+   virtual ~base_exception() throw() {};
+   
 private:
    
    std::string _what;

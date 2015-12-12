@@ -27,8 +27,10 @@
 *.out
 *.app
 
-# Other stuff
+# Potatocache stuff
 build
 dist
 *.egg-info
 .idea
+tester
+Makefile.bak
