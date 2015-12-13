@@ -5,18 +5,16 @@ OBJS = core/os.o core/potatocache.o core/utils.o
 
 LIBS = -lrt
 
-TEST_OBJS = core/tester.o core/os_test.cpp
+TEST_OBJS = core/tester.o core/test.cpp core/os_test.cpp
 
 TEST_LIBS = -lboost_unit_test_framework
 
 
 default: build 
 
-build: c-build py-build
+build: $(OBJS)
 
-c-build: $(OBJS)
-
-c-test: $(OBJS) $(TEST_OBJS) Makefile
+test: $(OBJS) $(TEST_OBJS) Makefile
 	$(CXX) -o ./tester $(OBJS) $(TEST_OBJS) $(TEST_LIBS) $(LIBS) 
 	./tester
 
@@ -24,11 +22,9 @@ py-build:
 	(cd py && ./setup.py build)
 	(cd py && ./setup.py build_ext -i)
 
-
 # This will need some improvement. :)
 py-test: clean
 	./main.py
-
 
 clean:
 	rm -rf py/build
@@ -36,12 +32,14 @@ clean:
 	rm -f tester Makefile.bak
 	rm -f core/*.o
 
-test: c-test py-test
+all-test: test py-test
+
+all-build: build py-build
 
 depend:
 	makedepend -Y core/*.cpp core/*.hpp
 
-.PHONY: depend default build clean py-build py-test c-build c-test
+.PHONY: depend default build clean py-build py-test all-build all-test
 
 # DO NOT DELETE
 

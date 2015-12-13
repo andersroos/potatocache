@@ -65,6 +65,16 @@ namespace potatocache {
       
       return true;
    }
+
+   void shm::remove()
+   {
+      if (shm_unlink(_name.c_str()) < 0) {
+         if (errno != ENOENT) {
+            throw os_exception() << fmt("failed unlink shared memory section %s, errno %d", _name.c_str(), errno);
+         }
+      }
+   }
+   
 }
 
 

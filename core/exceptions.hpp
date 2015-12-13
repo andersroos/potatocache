@@ -1,7 +1,8 @@
 #ifndef POTATOCACHE_EXCEPTIONS_HPP
 #define POTATOCACHE_EXCEPTIONS_HPP
 
-#include <string.h>
+#include <string>
+#include <exception>
 
 class base_exception : public std::exception
 {
