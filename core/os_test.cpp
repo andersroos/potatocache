@@ -11,12 +11,17 @@ using namespace std;
 
 BOOST_AUTO_TEST_CASE(create_when_exists_returns_false)
 {
-   // Test that the message queue is working as a queue (FIFO).
-
    string name('/' + uniqid());
-   
    shm shm(name);
    BOOST_CHECK(shm.create(256));
    BOOST_CHECK(!shm.create(256));
    shm.remove();
 }
+
+BOOST_AUTO_TEST_CASE(open_returns_false_if_it_does_not_exists)
+{
+   string name('/' + uniqid());
+   shm shm(name);
+   BOOST_CHECK(!shm.open());
+}
+
