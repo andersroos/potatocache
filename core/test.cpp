@@ -6,7 +6,7 @@
 using namespace std;
 
 // Return a random alphanumeric string.
-string uniqid(uint32_t length)
+string uniqueid(uint32_t length)
 {
    string s;
    

@@ -13,6 +13,15 @@ using namespace std;
 
 namespace potatocache {
 
+   char* map(const string& name, uint64_t size, int fd) {
+      char* mem = static_cast<char*>(mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+      if (mem == MAP_FAILED) {
+         throw os_exception() << fmt("failed to mmap shared memory section %s, errno %d", name.c_str(), errno);
+      }
+      return mem;
+   }
+
+   
    shm::shm(const std::string& name) : _name(name), _fd(-1), _mem(NULL), _size(0)
    {
       if (sizeof(char) != 1) {
@@ -36,7 +45,7 @@ namespace potatocache {
          throw base_exception() << fmt("failed to set size of shared object, errno %d", _name.c_str(), errno);
       }
 
-      _mem = static_cast<char*>(mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+      _mem = map(_name, size, fd);
       _fd = fd;
 
       return true;
@@ -60,7 +69,7 @@ namespace potatocache {
          throw os_exception() << fmt("failed to stat shared memory section %s, errno %d", _name.c_str(), errno);
       }
       
-      _mem = static_cast<char*>(mmap(NULL, s.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+      _mem = map(_name, s.st_size, fd);
       _fd = fd;
       
       return true;

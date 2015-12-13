@@ -3,6 +3,7 @@
 #define POTATOCACHE_OS_HPP
 
 #include <stdint.h>
+#include <iostream>
 
 #include "exceptions.hpp"
 
@@ -48,7 +49,8 @@ namespace potatocache {
       // Get a object pointer based on a byte.
       template<class T>
       T* ref(uint64_t byte_offset) { return reinterpret_cast<T*>(_mem + byte_offset); }
-      
+
+      // TODO munmap in destructor?
       virtual ~shm() {};
       
    private:
