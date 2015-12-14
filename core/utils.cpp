@@ -1,6 +1,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/time.h>
+#include <algorithm>
+#include <locale>
 
 #include "exceptions.hpp"
 #include "utils.hpp"
@@ -33,5 +35,7 @@ uint64_t now_us() {
 }
 
 std::string errstr(int errnum) {
-   return std::string(strerror(errnum));
+   std::string res(strerror(errnum));
+   std::transform(res.begin(), res.end(), res.begin(), ::tolower);
+   return res;
 }

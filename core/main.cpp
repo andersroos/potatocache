@@ -38,7 +38,11 @@ int main()
    else if (shm1.open()) {
       cerr << "opened shm" << endl;
       auto mutex = shm1.ptr<pthread_mutex_t>(0);
-      cerr << "locking " << errstr(pthread_mutex_lock(mutex)) << endl;
+      int res = pthread_mutex_lock(mutex);
+      cerr << "locking " << errstr(res) << endl;
+      if (res == EOWNERDEAD) {
+         cerr << "setting consistent " << errstr(pthread_mutex_consistent(mutex)) << endl;
+      }
    }
    else {
       cerr << "failed to create or open" << endl;
