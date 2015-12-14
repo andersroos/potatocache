@@ -2,7 +2,6 @@
 #include <stdarg.h>
 #include <sys/time.h>
 #include <algorithm>
-#include <locale>
 
 #include "exceptions.hpp"
 #include "utils.hpp"
