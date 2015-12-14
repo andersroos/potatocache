@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/time.h>
-#include <sstream>
 
 #include "exceptions.hpp"
 #include "utils.hpp"
@@ -31,4 +30,8 @@ uint64_t now_us() {
    timeval now;
    gettimeofday(&now, 0);
    return now.tv_sec * 1000000 + now.tv_usec;
+}
+
+std::string errstr(int errnum) {
+   return std::string(strerror(errnum));
 }

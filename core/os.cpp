@@ -83,6 +83,12 @@ namespace potatocache {
          }
       }
    }
+
+   // TODO munmap?
+   // virtual ~shm()
+   // {
+   //    
+   // }
    
 }
 

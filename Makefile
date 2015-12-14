@@ -1,9 +1,9 @@
 # TODO Find some way to keep those in sync or maybe it does not matter. Just build with both py and c.
-CXXFLAGS = -pthread -DNDEBUG -g -fwrapv -O2 -Wall -g -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -fPIC -std=c++11
+CXXFLAGS = -pthread -DNDEBUG -g -fwrapv -O2 -Wall -Wno-unused-result -g -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -fPIC -std=c++11
 
 OBJS = core/os.o core/potatocache.o core/utils.o
 
-LIBS = -lrt
+LIBS = -lrt -lpthread
 
 TEST_OBJS = core/tester.o core/test.cpp core/os_test.cpp
 

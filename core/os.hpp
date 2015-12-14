@@ -62,7 +62,6 @@ namespace potatocache {
       char* _mem;
       uint64_t _size;
    };
-
 }
 
 #endif
