@@ -1,5 +1,5 @@
 # TODO Find some way to keep those in sync or maybe it does not matter. Just build with both py and c.
-CXXFLAGS = -pthread -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -g -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -fPIC -std=c++11
+CXXFLAGS = -pthread -DNDEBUG -g -fwrapv -O2 -Wall -g -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -fPIC -std=c++11
 
 OBJS = core/os.o core/potatocache.o core/utils.o
 
@@ -17,6 +17,9 @@ build: $(OBJS)
 test: $(OBJS) $(TEST_OBJS) Makefile
 	$(CXX) -o ./tester $(OBJS) $(TEST_OBJS) $(TEST_LIBS) $(LIBS) 
 	./tester
+
+main: $(OBJS) core/main.o
+	$(CXX) -o ./main $^ $(LIBS)
 
 py-build:
 	(cd py && ./setup.py build)
@@ -43,6 +46,7 @@ depend:
 
 # DO NOT DELETE
 
+core/main.o: core/os.hpp core/exceptions.hpp
 core/os.o: core/os.hpp core/exceptions.hpp core/utils.hpp core/shared.hpp
 core/os_test.o: core/test.hpp core/os.hpp core/exceptions.hpp
 core/potatocache.o: core/potatocache.hpp core/os.hpp core/exceptions.hpp

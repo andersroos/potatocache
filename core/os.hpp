@@ -48,9 +48,11 @@ namespace potatocache {
 
       // Get a object pointer based on a byte.
       template<class T>
-      T* ref(uint64_t byte_offset) { return reinterpret_cast<T*>(_mem + byte_offset); }
+      T* ptr(uint64_t byte_offset) { return reinterpret_cast<T*>(_mem + byte_offset); }
 
-      // TODO munmap in destructor?
+      template<class T>
+      T& ref(uint64_t byte_offset) { return *reinterpret_cast<T*>(_mem + byte_offset); }
+      
       virtual ~shm() {};
       
    private:

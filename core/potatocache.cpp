@@ -40,7 +40,7 @@ namespace potatocache {
       // TODO Lock is needed.
 
       // TODO Is same mem mapped to different addresses? Then we need to work with offsets.
-      mem_header* header = _shm.ref<mem_header>(0);
+      mem_header* header = _shm.ptr<mem_header>(0);
       
       header->mem_size = config.memory_segment_size;
       header->hash_offset = sizeof(mem_header);
