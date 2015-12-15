@@ -39,14 +39,14 @@ namespace potatocache {
          
          throw os_exception() << fmt("failed to create shared memory section %s, errno %d", _name.c_str(), errno);
       }
+      _fd = fd;
 
-      if (ftruncate(fd, size) < 0) {
+      if (ftruncate(_fd, size) < 0) {
          shm_unlink(_name.c_str());
          throw base_exception() << fmt("failed to set size of shared object, errno %d", _name.c_str(), errno);
       }
 
-      _mem = map(_name, size, fd);
-      _fd = fd;
+      _mem = map(_name, size, _fd);
 
       return true;
    }
@@ -60,17 +60,12 @@ namespace potatocache {
          }
          throw os_exception() << fmt("failed to open shared memory section %s, errno %d", _name.c_str(), errno);
       }
+      _fd = fd;
 
       // TODO Is there a timing issue here if other thread is between create and ftruncate? Fail if stat is below
       // threshold? Time to start c++ unittests I think. Use mutex to fix this?
       
-      struct stat s;
-      if (fstat(fd, &s) < 0) {
-         throw os_exception() << fmt("failed to stat shared memory section %s, errno %d", _name.c_str(), errno);
-      }
-      
-      _mem = map(_name, s.st_size, fd);
-      _fd = fd;
+      _mem = map(_name, size(), _fd);
       
       return true;
    }
@@ -84,12 +79,28 @@ namespace potatocache {
       }
    }
 
-   // TODO munmap?
-   // virtual ~shm()
-   // {
-   //    
-   // }
+   uint64_t shm::size()
+   {
+      struct stat s;
+      if (fstat(_fd, &s) < 0) {
+         throw os_exception() << fmt("failed to stat shared memory section %s, errno %d", _name.c_str(), errno);
+      }
+      return s.st_size;
+   }
    
+   shm::~shm()
+   {
+      if (_mem) {
+         try {
+            munmap(_mem, size());
+         }
+         catch (const os_exception& e) {
+         }
+      }
+      if (_fd != -1) {
+         close(_fd);
+      }
+   }
 }
 
 
