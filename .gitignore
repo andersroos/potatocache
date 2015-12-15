@@ -32,6 +32,6 @@ build
 dist
 *.egg-info
 .idea
-tester
+run-tests
 main
 Makefile.bak

@@ -5,7 +5,7 @@ OBJS = core/os.o core/potatocache.o core/utils.o
 
 LIBS = -lrt -lpthread
 
-TEST_OBJS = core/tester.o core/test.cpp core/os_test.cpp
+TEST_OBJS = core/run-tests.o core/test.cpp core/os-test.cpp
 
 TEST_LIBS = -lboost_unit_test_framework
 
@@ -15,8 +15,8 @@ default: build
 build: $(OBJS)
 
 test: $(OBJS) $(TEST_OBJS) Makefile
-	$(CXX) -o ./tester $(OBJS) $(TEST_OBJS) $(TEST_LIBS) $(LIBS) 
-	./tester
+	$(CXX) -o ./run-tests $(OBJS) $(TEST_OBJS) $(TEST_LIBS) $(LIBS) 
+	./run-tests
 
 main: $(OBJS) core/main.o
 	$(CXX) -o ./main $^ $(LIBS)
