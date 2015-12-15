@@ -5,14 +5,13 @@
 #include <stdint.h>
 #include <pthread.h>
 
-#include <iostream>
-
 #include "exceptions.hpp"
 
 // Abstraction of os dependent stuff for easier conversion to other os with boost or whatever later.
 
 namespace potatocache {
 
+   // TODO Change to system_error?
    struct os_exception : public base_exception {};
 
    // Class representing a raw shared memory section including locking of it.
@@ -24,7 +23,9 @@ namespace potatocache {
       
       // Create a shm object.
       //
-      // name: the name of the shared memory section alphanum and _ is allowed, length <= 31
+      // name: the name of the shared memory section alphanum and _ is allowed, length <= 30
+      //
+      // throws: std::invalid_argument on bad name, or os_exception if os not compatible
       shm(const std::string& name);
       
       // Create shared memory. If created the lock will also be initialized and locked on return.

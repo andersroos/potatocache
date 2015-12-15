@@ -3,7 +3,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <stdexcept>
 #include <iostream>
+#include <algorithm>
 
 #include "os.hpp"
 #include "utils.hpp"
@@ -22,8 +24,17 @@ namespace potatocache {
    }
 
    
-   shm::shm(const std::string& name) : _name(name), _fd(-1), _mem(NULL), _size(0)
+   shm::shm(const std::string& name) : _name('/' + name), _fd(-1), _mem(NULL), _size(0)
    {
+      size_t len = name.size();
+      if (len < 1 or 30 < len) {
+         throw invalid_argument(fmt("name should be from 1 to 30 chars, \"%s\" is %u", name.c_str(), len));
+      }
+      
+      if (find_if(++name.begin(), name.end(), [](char c) { return !(isalnum(c) || (c == '_')); }) != name.end()) {
+         throw invalid_argument(fmt("name should contain only alphanum and _, \"%s\" does not", name.c_str()));
+      }
+      
       if (sizeof(char) != 1) {
          throw os_exception() << "this code does not work on systems where sizeof char != 1";
       }

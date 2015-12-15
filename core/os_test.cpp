@@ -10,10 +10,15 @@
 using namespace potatocache;
 using namespace std;
 
+BOOST_AUTO_TEST_CASE(test_bad_name_raises_exception)
+{
+   BOOST_CHECK_THROW(shm("012345678901234567890123456789XX"), invalid_argument);
+   BOOST_CHECK_THROW(shm("0 1"), invalid_argument);
+}
 
 BOOST_AUTO_TEST_CASE(test_create_when_exists_returns_false)
 {
-   string name('/' + uniqueid());
+   string name(uniqueid());
    shm shm(name);
    BOOST_CHECK(shm.create(256));
    BOOST_CHECK(!shm.create(256));
@@ -22,7 +27,7 @@ BOOST_AUTO_TEST_CASE(test_create_when_exists_returns_false)
 
 BOOST_AUTO_TEST_CASE(test_open_returns_false_if_it_does_not_exists)
 {
-   string name('/' + uniqueid());
+   string name(uniqueid());
    shm shm(name);
    BOOST_CHECK(!shm.open());
    shm.remove();
@@ -30,7 +35,7 @@ BOOST_AUTO_TEST_CASE(test_open_returns_false_if_it_does_not_exists)
 
 BOOST_AUTO_TEST_CASE(test_writing_and_reading_data_from_same_process_using_different_shm_works)
 {
-   string name('/' + uniqueid());
+   string name(uniqueid());
    
    shm shm1(name);
    shm1.create(256);
