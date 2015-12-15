@@ -16,7 +16,7 @@ using namespace std;
 namespace potatocache {
 
    char* map(const string& name, uint64_t size, int fd) {
-      char* mem = static_cast<char*>(mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+      auto mem = static_cast<char*>(mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
       if (mem == MAP_FAILED) {
          throw os_exception() << fmt("failed to mmap shared memory section %s, errno %d", name.c_str(), errno);
       }
@@ -26,7 +26,7 @@ namespace potatocache {
    
    shm::shm(const std::string& name) : _name('/' + name), _fd(-1), _mem(NULL), _size(0)
    {
-      size_t len = name.size();
+      auto len = name.size();
       if (len < 1 or 30 < len) {
          throw invalid_argument(fmt("name should be from 1 to 30 chars, \"%s\" is %u", name.c_str(), len));
       }
@@ -42,7 +42,7 @@ namespace potatocache {
 
    bool shm::create(uint64_t size)
    {
-      int fd = shm_open(_name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0700);
+      auto fd = shm_open(_name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0700);
       if (fd < 0) {
          if (errno == EEXIST) {
             return false;
@@ -64,7 +64,7 @@ namespace potatocache {
 
    bool shm::open()
    {
-      int fd = shm_open(_name.c_str(), O_RDWR, 0700);
+      auto fd = shm_open(_name.c_str(), O_RDWR, 0700);
       if (fd < 0) {
          if (errno == ENOENT) {
             return false;
@@ -97,6 +97,35 @@ namespace potatocache {
          throw os_exception() << fmt("failed to stat shared memory section %s, errno %d", _name.c_str(), errno);
       }
       return s.st_size;
+   }
+
+   void shm::lock()
+   {
+      auto mutex = ptr<pthread_mutex_t>(0);
+      
+      auto res = pthread_mutex_lock(mutex);
+      if (not res) {
+         return;
+      }
+      
+      if (res == EOWNERDEAD) {
+         res = pthread_mutex_consistent(mutex);
+         if (res) {
+            throw os_exception() << fmt("failed to make mutex consistent, errno %d", res);
+         }
+      }
+
+      throw os_exception() << fmt("failed to lock mutex, errno %d", res);
+   }
+
+   void shm::unlock()
+   {
+      auto mutex = ptr<pthread_mutex_t>(0);
+      
+      auto res = pthread_mutex_unlock(mutex);
+      if (not res) {
+         throw os_exception() << fmt("failed to unlock mutex, errno %d", res);
+      }
    }
    
    shm::~shm()

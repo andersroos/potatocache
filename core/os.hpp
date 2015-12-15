@@ -14,7 +14,7 @@ namespace potatocache {
    // TODO Change to system_error?
    struct os_exception : public base_exception {};
 
-   // Class representing a raw shared memory section including locking of it.
+   // Class representing a raw shared memory section including lock handling for it.
    struct shm
    {
       // Offset is the start offset for shmem usable outside this class. Offset 0 - offset is used for internal
@@ -63,11 +63,16 @@ namespace potatocache {
       T& ref(uint64_t byte_offset) { return *reinterpret_cast<T*>(_mem + byte_offset); }
 
       // Lock shared memory section.
+      //
+      // throws: os_exception if failed to lock (normally never fails)
       void lock();
    
       // Unlock shared memory section.
+      //
+      // throws: os_exception if failed to unlock (normally never fails)
       void unlock();
 
+      // Unmaps and closes shared memory.
       virtual ~shm();
 
    private:
