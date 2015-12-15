@@ -15,7 +15,8 @@ using namespace std;
 
 namespace potatocache {
 
-   char* map(const string& name, uint64_t size, int fd) {
+   char* map(const string& name, uint64_t size, int fd)
+   {
       auto mem = static_cast<char*>(mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
       if (mem == MAP_FAILED) {
          throw os_exception() << fmt("failed to mmap shared memory section %s, errno %d", name.c_str(), errno);
@@ -23,6 +24,32 @@ namespace potatocache {
       return mem;
    }
 
+   void init_mutex(pthread_mutex_t* mutex)
+   {
+      pthread_mutexattr_t attr;
+
+      int res;
+
+      res = pthread_mutexattr_init(&attr);
+      if (res) {
+         throw os_exception() << fmt("failed to init attr for mutex, errno %d", res);
+      }
+
+      res = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+      if (res) {
+         throw os_exception() << fmt("failed to set share attr for mutex, errno %d", res);
+      }
+      
+      res = pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST);
+      if (res) {
+         throw os_exception() << fmt("failed to set robust attr for mutex, errno %d", res);
+      }
+
+      res = pthread_mutex_init(mutex, &attr);
+      if (res) {
+         throw os_exception() << fmt("failed to init mutex, errno %d", res);
+      }
+   }
    
    shm::shm(const std::string& name) : _name('/' + name), _fd(-1), _mem(NULL), _size(0)
    {
@@ -58,6 +85,9 @@ namespace potatocache {
       }
 
       _mem = map(_name, size, _fd);
+
+      init_mutex(ptr<pthread_mutex_t>(0));
+      lock();
 
       return true;
    }
@@ -103,7 +133,9 @@ namespace potatocache {
    {
       auto mutex = ptr<pthread_mutex_t>(0);
       
-      auto res = pthread_mutex_lock(mutex);
+      int res;
+
+      res = pthread_mutex_lock(mutex);
       if (not res) {
          return;
       }
@@ -123,7 +155,7 @@ namespace potatocache {
       auto mutex = ptr<pthread_mutex_t>(0);
       
       auto res = pthread_mutex_unlock(mutex);
-      if (not res) {
+      if (res) {
          throw os_exception() << fmt("failed to unlock mutex, errno %d", res);
       }
    }
@@ -142,23 +174,3 @@ namespace potatocache {
       }
    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
