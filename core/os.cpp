@@ -11,9 +11,15 @@
 #include "utils.hpp"
 #include "shared.hpp"
 
+#define MUTEX_PTR (&ref<internal_header>(0).mutex)
+
 using namespace std;
 
 namespace potatocache {
+   
+   //
+   // Local functions.
+   //
 
    char* map(const string& name, uint64_t size, int fd)
    {
@@ -50,8 +56,22 @@ namespace potatocache {
          throw os_exception() << fmt("failed to init mutex, errno %d", res);
       }
    }
+
+   struct internal_header
+   {
+      pthread_mutex_t mutex;
+   };
+
+   //
+   // Shm class.
+   //
    
-   shm::shm(const std::string& name) : _name('/' + name), _fd(-1), _mem(NULL), _size(0)
+   shm::shm(const std::string& name) :
+      offset(sizeof(internal_header)),
+      _name('/' + name),
+      _fd(-1),
+      _mem(NULL),
+      _size(0)
    {
       auto len = name.size();
       if (len < 1 or 30 < len) {
@@ -86,7 +106,8 @@ namespace potatocache {
 
       _mem = map(_name, size, _fd);
 
-      init_mutex(ptr<pthread_mutex_t>(0));
+      init_mutex(MUTEX_PTR);
+      // TODO Possible to init locked?
       lock();
 
       return true;
@@ -131,7 +152,7 @@ namespace potatocache {
 
    void shm::lock()
    {
-      auto mutex = ptr<pthread_mutex_t>(0);
+      auto mutex = MUTEX_PTR;
       
       int res;
 
@@ -152,9 +173,7 @@ namespace potatocache {
 
    void shm::unlock()
    {
-      auto mutex = ptr<pthread_mutex_t>(0);
-      
-      auto res = pthread_mutex_unlock(mutex);
+      auto res = pthread_mutex_unlock(MUTEX_PTR);
       if (res) {
          throw os_exception() << fmt("failed to unlock mutex, errno %d", res);
       }

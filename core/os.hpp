@@ -19,7 +19,7 @@ namespace potatocache {
    {
       // Offset is the start offset for shmem usable outside this class. Offset 0 - offset is used for internal
       // bookkeping and should never be used outside it.
-      static const uint64_t offset = sizeof(pthread_mutex_t);
+      const uint64_t offset;
       
       // Create a shm object.
       //
@@ -36,6 +36,8 @@ namespace potatocache {
       //
       // throws: os_exception if failed to create
       bool create(uint64_t size);
+
+      // TODO Page size method needed.
    
       // Open existing shared memory.
       //
