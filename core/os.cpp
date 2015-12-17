@@ -14,6 +14,8 @@
 
 using namespace std;
 
+// TODO Add :: to all c lib calls.
+
 namespace potatocache {
    
    //

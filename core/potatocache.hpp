@@ -12,7 +12,7 @@
 // The contents of this file is considered public api, the rest of the code is not.
 namespace potatocache {
    
-   // Configration object for the cache (0 means unlimited unless othervise stated).
+   // Configration object for the cache.
    struct config {
       
       // Size in number of entries.
@@ -31,7 +31,8 @@ namespace potatocache {
       //
       // name: the key for the cache, used to share cache among processes, max 254 chars alphanum and _
       //
-      // config: the cache config, see cache class above
+      // config: the cache config, see config class above, config is used by the process that creates the cache
+      // processes that opens a created cache can't configure it
       //
       // throws: various std::exception on irrecoverable errors
       api(const std::string& name,
@@ -57,6 +58,9 @@ namespace potatocache {
       void put(const std::string& key,
                const std::string& value);
 
+      // Removes the cache if last process connected.
+      virtual ~api();
+      
    private:
 
       shm _shm;

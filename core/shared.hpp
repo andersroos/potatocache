@@ -36,6 +36,14 @@ namespace potatocache {
       // Storing current operation for help with recovery if process is killed during operation.
       operation op;
       
+      // Number of processes connected to the cache. This count may not be correct of cache did not shut down
+      // gracefully.
+      uint32_t process_count;
+
+      // Pids connected to the cache. Used in conjunction with process_count to try too figure out when cahce should be
+      // destroyed.
+      pid_t pids[32];
+      
       // Size of shared memory in bytes.
       uint64_t mem_size;
       

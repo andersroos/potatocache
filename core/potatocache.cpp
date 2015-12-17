@@ -20,7 +20,6 @@ namespace potatocache {
       _shm(name),
       _config(config)
    {
-
       while (true) {
          if (_shm.open()) {
             // TODO Check size.
@@ -33,5 +32,9 @@ namespace potatocache {
          }
       }
       
+   }
+
+   api::~api()
+   {
    }
 }
