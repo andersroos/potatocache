@@ -42,7 +42,10 @@ all-build: build py-build
 depend:
 	makedepend -Y core/*.cpp core/*.hpp
 
-.PHONY: depend default build clean py-build py-test all-build all-test
+todo:
+	grep -rIn TODO . | grep -v -e "-rIn" -e .idea
+
+.PHONY: depend default build clean py-build py-test all-build all-test todo
 
 # DO NOT DELETE
 

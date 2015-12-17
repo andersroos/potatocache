@@ -68,14 +68,15 @@ namespace potatocache {
    
    shm::shm(const std::string& name) :
       offset(sizeof(internal_header)),
+      page_size(sysconf(_SC_PAGESIZE)),
       _name('/' + name),
       _fd(-1),
       _mem(NULL),
       _size(0)
    {
       auto len = name.size();
-      if (len < 1 or 30 < len) {
-         throw invalid_argument(fmt("name should be from 1 to 30 chars, \"%s\" is %u", name.c_str(), len));
+      if (len < 1 or 254 < len) {
+         throw invalid_argument(fmt("name should be from 1 to 254 chars, \"%s\" is %u", name.c_str(), len));
       }
       
       if (find_if(++name.begin(), name.end(), [](char c) { return !(isalnum(c) || (c == '_')); }) != name.end()) {
@@ -89,46 +90,66 @@ namespace potatocache {
 
    bool shm::create(uint64_t size)
    {
-      auto fd = shm_open(_name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0700);
-      if (fd < 0) {
-         if (errno == EEXIST) {
-            return false;
-         }
+      try {
          
-         throw os_exception() << fmt("failed to create shared memory section %s, errno %d", _name.c_str(), errno);
-      }
-      _fd = fd;
+         auto fd = shm_open(_name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0700);
+         if (fd < 0) {
+            if (errno == EEXIST) {
+               return false;
+            }
+            
+            throw os_exception() << fmt("failed to create shared memory section %s, errno %d", _name.c_str(), errno);
+         }
+         _fd = fd;
 
-      if (ftruncate(_fd, size) < 0) {
+         if (ftruncate(_fd, size) < 0) {
+            throw os_exception() << fmt("failed to set size of shared object, errno %d", _name.c_str(), errno);
+         }
+
+         _mem = map(_name, size, _fd);
+
+         init_mutex(MUTEX_PTR);
+         // TODO There is a timing issue here, will handle it with status flag outside this class.
+         lock();
+         
+      }
+      catch (const os_exception& e) {
          shm_unlink(_name.c_str());
-         throw base_exception() << fmt("failed to set size of shared object, errno %d", _name.c_str(), errno);
+         close();
+         throw e;
       }
-
-      _mem = map(_name, size, _fd);
-
-      init_mutex(MUTEX_PTR);
-      // TODO Possible to init locked?
-      lock();
 
       return true;
    }
 
    bool shm::open()
    {
-      auto fd = shm_open(_name.c_str(), O_RDWR, 0700);
-      if (fd < 0) {
-         if (errno == ENOENT) {
+      try {
+      
+         auto fd = shm_open(_name.c_str(), O_RDWR, 0700);
+         if (fd < 0) {
+            if (errno == ENOENT) {
+               return false;
+            }
+            throw os_exception() << fmt("failed to open shared memory section %s, errno %d", _name.c_str(), errno);
+         }
+         _fd = fd;
+
+         auto size = shm::size();
+         if (size < offset) {
+            // Creating process in the middle of resizing or memory section in broken state. Clean up and return false
+            // for later retry.
+            close();
             return false;
          }
-         throw os_exception() << fmt("failed to open shared memory section %s, errno %d", _name.c_str(), errno);
+         _mem = map(_name, size , _fd);
+         
       }
-      _fd = fd;
+      catch (const os_exception& e) {
+         close();
+         throw e;
+      }
 
-      // TODO Is there a timing issue here if other thread is between create and ftruncate? Fail if stat is below
-      // threshold? Time to start c++ unittests I think. Use mutex to fix this?
-      
-      _mem = map(_name, size(), _fd);
-      
       return true;
    }
 
@@ -181,15 +202,19 @@ namespace potatocache {
    
    shm::~shm()
    {
+      close();
+   }
+
+   void shm::close()
+   {
       if (_mem) {
-         try {
-            munmap(_mem, size());
-         }
-         catch (const os_exception& e) {
-         }
+         munmap(_mem, size());
+         _mem = NULL;
       }
+      
       if (_fd != -1) {
-         close(_fd);
+         ::close(_fd);
+         _fd = -1;
       }
    }
 }

@@ -12,8 +12,12 @@ using namespace std;
 
 BOOST_AUTO_TEST_CASE(test_bad_name_raises_exception)
 {
-   BOOST_CHECK_THROW(shm("012345678901234567890123456789XX"), invalid_argument);
-   BOOST_CHECK_THROW(shm("0 1"), invalid_argument);
+   string s(255, 'x');
+   BOOST_CHECK_THROW(shm x(s), invalid_argument);
+   
+   BOOST_CHECK_THROW(shm x("0/1"), invalid_argument);
+   
+   BOOST_CHECK_THROW(shm x("0 1"), invalid_argument);
 }
 
 BOOST_AUTO_TEST_CASE(test_create_when_exists_returns_false)
