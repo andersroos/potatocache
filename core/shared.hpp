@@ -14,19 +14,22 @@ namespace potatocache {
       
       // Create in progress but mem has just been created and cleared, mutex not even initialized yet. Recovery should
       // just recreted the shared memory section.
-      create = 0,
+      op_create = 0,
 
       // No operation in progress. After getting lock, this should be the operation or recovery is needed.
-      noop,
+      op_noop,
       
       // Initalization after create is in progress.
-      init,
+      op_init,
+
+      // Opening check of connected processes.
+      op_open,
 
       // Getting of a value.
-      get,
+      op_get,
 
       // Putting a value.
-      put,
+      op_put,
       
    };
    
@@ -41,7 +44,7 @@ namespace potatocache {
       uint32_t process_count;
 
       // Pids connected to the cache. Used in conjunction with process_count to try too figure out when cahce should be
-      // destroyed.
+      // destroyed. This list will be checked agains at open.
       pid_t pids[32];
       
       // Size of shared memory in bytes.

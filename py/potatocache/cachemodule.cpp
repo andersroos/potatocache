@@ -12,10 +12,10 @@ create(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    printf("%s\n", name);
-    printf("%lu\n", sizeof(potatocache::block));
-    printf("%lu\n", sizeof(potatocache::hash_entry));
-    printf("%lu\n", sizeof(potatocache::mem_header));
+    printf("name  %s\n", name);
+    printf("block %lu\n", sizeof(potatocache::block));
+    printf("entry %lu\n", sizeof(potatocache::hash_entry));
+    printf("head  %lu\n", sizeof(potatocache::mem_header));
 
     potatocache::config config;
     potatocache::api cache(name, config);
