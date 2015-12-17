@@ -3,18 +3,61 @@
 
 #include <stdint.h>
 
+#define BLOCK_SIZE 64
+
+// Data in the shared section.
+
 namespace potatocache {
 
-   // Memory block for storing values.
-   struct block {
+   // Enum for storing what operation is in progress.
+   enum operation {
+      
+      // Create in progress but mem has just been created and cleared, mutex not even initialized yet. Recovery should
+      // just recreted the shared memory section.
+      create = 0,
 
-      // Pointer to next block, null if no more blocks in value.
-      uint64_t next_block_offset;
+      // No operation in progress. After getting lock, this should be the operation or recovery is needed.
+      noop,
+      
+      // Initalization after create is in progress.
+      init,
 
-      // The value in the block, no termination char.
-      char data[1024 - sizeof(uint64_t)]; 
+      // Getting of a value.
+      get,
+
+      // Putting a value.
+      put,
+      
    };
+   
+   // Header for shared memory segment, stored at offset in shared memory segment.
+   struct mem_header {
+      
+      // Storing current operation for help with recovery if process is killed during operation.
+      operation op;
+      
+      // Size of shared memory in bytes.
+      uint64_t mem_size;
+      
+      // Start byte of hash table.
+      uint64_t hash_offset;
+      
+      // Number of elementes in hash table.
+      uint32_t hash_size;
+      
+      // Start byte of blocks.
+      uint64_t blocks_offset;
 
+      // Number of bocks.
+      uint32_t blocks_size;
+      
+      // Number of free blocks.
+      uint32_t blocks_free;
+      
+      // First free block index, -1 if no free blocks.
+      int64_t free_block_index;
+   };
+   
    // A hash table entry.
    struct hash_entry {
       
@@ -24,36 +67,23 @@ namespace potatocache {
       // The full key (0 terminated string -> max length 31 chars).
       char key[32];
 
-      // Offset of value block.
-      uint64_t value_offset;
+      // Index of value block.
+      int64_t value_index;
 
       // The size of the value in chars.
-      uint32_t value_size;
+      uint64_t value_size;
    };
 
-   // Header for shared memory segment, stored first in shared memory segment.
-   struct mem_header {
-      // Size of shared memory in bytes.
-      uint64_t mem_size;
-      
-      // Start byte of hash table.
-      uint64_t hash_offset;
-      
-      // Number of elementes in hash table.
-      uint32_t hash_size;
+   // Memory block for storing values.
+   struct block {
 
-      // Start byte of blocks.
-      uint64_t blocks_offset;
+      // Index of next block, -1 if no more blocks in value (size is also usable).
+      int64_t next_block_index;
 
-      // Number of bocks.
-      uint32_t blocks_size;
-
-      // Number of free blocks.
-      uint32_t blocks_free;
-
-      // First free block offset, 0 if no free blocks.
-      uint64_t free_block_offset;
+      // The value in the block, no termination char.
+      char data[BLOCK_SIZE - sizeof(uint64_t)]; 
    };
+
 }
 
 #endif

@@ -9,7 +9,6 @@
 
 #include "os.hpp"
 #include "utils.hpp"
-#include "shared.hpp"
 
 #define MUTEX_PTR (&ref<internal_header>(0).mutex)
 

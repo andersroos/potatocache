@@ -9,6 +9,7 @@
 #include "exceptions.hpp"
 #include "utils.hpp"
 #include "os.hpp"
+#include "shared.hpp"
 
 using namespace std;
 
@@ -19,6 +20,7 @@ namespace potatocache {
       _shm(name),
       _config(config)
    {
+
       while (true) {
          if (_shm.open()) {
             // TODO Check size.
@@ -30,23 +32,6 @@ namespace potatocache {
             break;
          }
       }
-      
-      // TODO Created or connected? How to know if structures should be initied. C++ init possible?
-
-      // TODO Use malloc? Possible?
-
-      // TODO Lock is needed.
-
-      // TODO Is same mem mapped to different addresses? Then we need to work with offsets.
-      mem_header* header = _shm.ptr<mem_header>(0);
-      
-      header->mem_size = config.memory_segment_size;
-      header->hash_offset = sizeof(mem_header);
-      header->hash_size = 0;
-      header->blocks_offset = 0;
-      header->blocks_size = 0;
-      header->blocks_free = 0;
-      header->free_block_offset = header->blocks_offset;
       
    }
 }
