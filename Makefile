@@ -1,9 +1,17 @@
+
+MAKEFILE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+BASE_DIR := $(realpath $(CURDIR)/$(MAKEFILE_DIR))
+COVERAGE_DIR := $(BASE_DIR)/.cov
+
+EXTRA_CXXFLAGS ?=
+EXTRA_LIBS ?= 
+
 # TODO Find some way to keep those in sync or maybe it does not matter. Just build with both py and c.
-CXXFLAGS = -pthread -DNDEBUG -g -fwrapv -O2 -Wall -Wno-unused-result -g -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -fPIC -std=c++11
+CXXFLAGS = -pthread -DNDEBUG -g -fwrapv -O2 -Wall -Wno-unused-result -g -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -fPIC -std=c++11 $(EXTRA_CXXFLAGS)
 
 OBJS = core/os.o core/potatocache.o core/utils.o
 
-LIBS = -lrt -lpthread
+LIBS = -lrt -lpthread $(EXTRA_LIBS)
 
 TEST_OBJS = core/run-tests.o core/test.cpp core/os-test.cpp
 
@@ -30,10 +38,10 @@ py-test: clean py-build
 	./main.py
 
 clean:
-	rm -rf py/build
+	rm -rf py/build .cov
 	rm -f py/potatocache/*.so
-	rm -f tester Makefile.bak
-	rm -f core/*.o
+	rm -f run-tests main Makefile.bak
+	rm -f core/*.o core/*.gcda core/*.gcno
 
 all-test: test py-test
 
@@ -44,6 +52,13 @@ depend:
 
 todo:
 	grep -rIn TODO . | grep -v -e "-rIn" -e .idea
+
+coverage: clean
+	mkdir $(COVERAGE_DIR)
+	EXTRA_CXXFLAGS="--coverage" EXTRA_LIBS="-lgcov"	make -f $(BASE_DIR)/Makefile --no-print-directory test
+	lcov -q --capture --no-external --directory $(BASE_DIR)/core --output-file $(COVERAGE_DIR)/coverage.info
+	genhtml -q --prefix $(BASE_DIR) $(COVERAGE_DIR)/coverage.info --output-directory $(COVERAGE_DIR)/html
+	firefox $(COVERAGE_DIR)/html/core/index.html
 
 .PHONY: depend default build clean py-build py-test all-build all-test todo
 
