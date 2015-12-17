@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <system_error>
 #include <stdexcept>
 #include <iostream>
 #include <algorithm>
@@ -14,8 +15,6 @@
 
 using namespace std;
 
-// TODO Add :: to all c lib calls.
-
 namespace potatocache {
    
    //
@@ -24,9 +23,9 @@ namespace potatocache {
 
    char* map(const string& name, uint64_t size, int fd)
    {
-      auto mem = static_cast<char*>(mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+      auto mem = static_cast<char*>(::mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
       if (mem == MAP_FAILED) {
-         throw os_exception() << fmt("failed to mmap shared memory section %s, errno %d", name.c_str(), errno);
+         throw system_error(errno, system_category(), fmt("failed to mmap shared memory section %s", name.c_str()));
       }
       return mem;
    }
@@ -37,24 +36,24 @@ namespace potatocache {
 
       int res;
 
-      res = pthread_mutexattr_init(&attr);
+      res = ::pthread_mutexattr_init(&attr);
       if (res) {
-         throw os_exception() << fmt("failed to init attr for mutex, errno %d", res);
+         throw system_error(res, system_category(), "failed to init attr for mutex");
       }
 
-      res = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+      res = ::pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
       if (res) {
-         throw os_exception() << fmt("failed to set share attr for mutex, errno %d", res);
+         throw system_error(res, system_category(), "failed to set share attr for mutex");
       }
       
-      res = pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST);
+      res = ::pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST);
       if (res) {
-         throw os_exception() << fmt("failed to set robust attr for mutex, errno %d", res);
+         throw system_error(res, system_category(), "failed to set robust attr for mutex");
       }
 
-      res = pthread_mutex_init(mutex, &attr);
+      res = ::pthread_mutex_init(mutex, &attr);
       if (res) {
-         throw os_exception() << fmt("failed to init mutex, errno %d", res);
+         throw system_error(res, system_category(), "failed to init mutex");
       }
    }
 
@@ -69,7 +68,7 @@ namespace potatocache {
    
    shm::shm(const std::string& name) :
       offset(sizeof(internal_header)),
-      page_size(sysconf(_SC_PAGESIZE)),
+      page_size(::sysconf(_SC_PAGESIZE)),
       _name('/' + name),
       _fd(-1),
       _mem(NULL)
@@ -79,12 +78,12 @@ namespace potatocache {
          throw invalid_argument(fmt("name should be from 1 to 254 chars, \"%s\" is %u", name.c_str(), len));
       }
       
-      if (find_if(name.begin(), name.end(), [](char c) { return !(isalnum(c) || (c == '_')); }) != name.end()) {
+      if (::find_if(name.begin(), name.end(), [](char c) { return !(::isalnum(c) || (c == '_')); }) != name.end()) {
          throw invalid_argument(fmt("name should contain only alphanum and _, \"%s\" does not", name.c_str()));
       }
       
       if (sizeof(char) != 1) {
-         throw os_exception() << "this code does not work on systems where sizeof char != 1";
+         throw runtime_error("this code does not work on systems where sizeof char != 1");
       }
    }
 
@@ -92,31 +91,32 @@ namespace potatocache {
    {
       try {
          
-         auto fd = shm_open(_name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0700);
+         auto fd = ::shm_open(_name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0700);
          if (fd < 0) {
             if (errno == EEXIST) {
                return false;
             }
             
-            throw os_exception() << fmt("failed to create shared memory section %s, errno %d", _name.c_str(), errno);
+            throw system_error(errno, system_category(),
+                               fmt("failed to create shared memory section %s", _name.c_str()));
          }
          _fd = fd;
 
-         if (ftruncate(_fd, size) < 0) {
-            throw os_exception() << fmt("failed to set size of shared object, errno %d", _name.c_str(), errno);
+         if (::ftruncate(_fd, size) < 0) {
+            throw system_error(errno, system_category(), fmt("failed to set size of shared object", _name.c_str()));
          }
 
          _mem = map(_name, size, _fd);
 
-         memset(_mem, 0, size);
+         ::memset(_mem, 0, size);
          
          init_mutex(MUTEX_PTR);
          // There is a timing issue here when the mutex is created but not locked, will be handled by status flag
          // outside this class.
          lock();
       }
-      catch (const os_exception& e) {
-         shm_unlink(_name.c_str());
+      catch (const system_error& e) {
+         ::shm_unlink(_name.c_str());
          close();
          throw;
       }
@@ -128,12 +128,12 @@ namespace potatocache {
    {
       try {
       
-         auto fd = shm_open(_name.c_str(), O_RDWR, 0700);
+         auto fd = ::shm_open(_name.c_str(), O_RDWR, 0700);
          if (fd < 0) {
             if (errno == ENOENT) {
                return false;
             }
-            throw os_exception() << fmt("failed to open shared memory section %s, errno %d", _name.c_str(), errno);
+            throw system_error(errno, system_category(), fmt("failed to open shared memory section %s"));
          }
          _fd = fd;
 
@@ -147,7 +147,7 @@ namespace potatocache {
          _mem = map(_name, size , _fd);
          
       }
-      catch (const os_exception& e) {
+      catch (const system_error& e) {
          close();
          throw;
       }
@@ -157,9 +157,9 @@ namespace potatocache {
 
    void shm::remove()
    {
-      if (shm_unlink(_name.c_str()) < 0) {
+      if (::shm_unlink(_name.c_str()) < 0) {
          if (errno != ENOENT) {
-            throw os_exception() << fmt("failed unlink shared memory section %s, errno %d", _name.c_str(), errno);
+            throw system_error(errno, system_category(), fmt("failed unlink shared memory section %s", _name.c_str()));
          }
       }
    }
@@ -167,8 +167,8 @@ namespace potatocache {
    uint64_t shm::size()
    {
       struct stat s;
-      if (fstat(_fd, &s) < 0) {
-         throw os_exception() << fmt("failed to stat shared memory section %s, errno %d", _name.c_str(), errno);
+      if (::fstat(_fd, &s) < 0) {
+         throw system_error(errno, system_category(), fmt("failed to stat shared memory section %s", _name.c_str()));
       }
       return s.st_size;
    }
@@ -179,27 +179,27 @@ namespace potatocache {
       
       int res;
 
-      res = pthread_mutex_lock(mutex);
+      res = ::pthread_mutex_lock(mutex);
       if (not res) {
          return;
       }
       
       if (res == EOWNERDEAD) {
-         res = pthread_mutex_consistent(mutex);
+         res = ::pthread_mutex_consistent(mutex);
          if (res) {
-            throw os_exception() << fmt("failed to make mutex consistent, errno %d", res);
+            throw system_error(res, system_category(), "failed to make mutex consistent");
          }
          return;
       }
 
-      throw os_exception() << fmt("failed to lock mutex, errno %d", res);
+      throw system_error(res, system_category(), "failed to lock mutex");
    }
 
    void shm::unlock()
    {
-      auto res = pthread_mutex_unlock(MUTEX_PTR);
+      auto res = ::pthread_mutex_unlock(MUTEX_PTR);
       if (res) {
-         throw os_exception() << fmt("failed to unlock mutex, errno %d", res);
+         throw system_error(res, system_category(), "failed to unlock mutex");
       }
    }
    
@@ -211,7 +211,7 @@ namespace potatocache {
    void shm::close()
    {
       if (_mem) {
-         munmap(_mem, size());
+         ::munmap(_mem, size());
          _mem = NULL;
       }
       

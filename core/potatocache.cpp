@@ -3,11 +3,10 @@
 #include <fcntl.h>
 
 #include <iostream>
-#include <stdexcept>
+#include <system_error>
 
 #include "potatocache.hpp"
 #include "shared.hpp"
-#include "exceptions.hpp"
 #include "utils.hpp"
 #include "os.hpp"
 #include "shared.hpp"
@@ -139,7 +138,7 @@ namespace potatocache {
                open(_shm);
                return;
             }
-            catch (const os_exception& e) {
+            catch (const system_error& e) {
                // Lock (or remove) failed (probably not initializsed yet), creator dead?
                _shm.remove();
                continue;

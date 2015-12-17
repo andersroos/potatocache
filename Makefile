@@ -23,7 +23,7 @@ default: build
 build: $(OBJS)
 
 test: $(OBJS) $(TEST_OBJS) Makefile
-	$(CXX) -o ./run-tests $(OBJS) $(TEST_OBJS) $(TEST_LIBS) $(LIBS) 
+	$(CXX) -std=c++11 -o ./run-tests $(OBJS) $(TEST_OBJS) $(TEST_LIBS) $(LIBS) 
 	./run-tests
 
 main: $(OBJS) core/main.o
@@ -64,12 +64,11 @@ coverage: clean
 
 # DO NOT DELETE
 
-core/main.o: core/os.hpp core/exceptions.hpp
-core/os.o: core/os.hpp core/exceptions.hpp core/utils.hpp core/shared.hpp
-core/os_test.o: core/test.hpp core/os.hpp core/exceptions.hpp
-core/potatocache.o: core/potatocache.hpp core/os.hpp core/exceptions.hpp
-core/potatocache.o: core/shared.hpp core/utils.hpp
+core/main.o: core/utils.hpp core/os.hpp
+core/os-test.o: core/test.hpp core/os.hpp
+core/os.o: core/os.hpp core/utils.hpp
+core/potatocache.o: core/potatocache.hpp core/os.hpp core/shared.hpp
+core/potatocache.o: core/utils.hpp
 core/test.o: core/test.hpp
-core/utils.o: core/exceptions.hpp core/utils.hpp
-core/os.o: core/exceptions.hpp
-core/potatocache.o: core/os.hpp core/exceptions.hpp
+core/utils.o: core/utils.hpp
+core/potatocache.o: core/os.hpp

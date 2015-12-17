@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <system_error>
 
 #include "test.hpp"
 #include "os.hpp"
@@ -98,7 +99,7 @@ BOOST_AUTO_TEST_CASE(test_create_fails_on_too_big_size)
    string name("shm" + uniqueid());
 
    shm shm(name);
-   BOOST_CHECK_THROW(shm.create(1e19), exception);
+   BOOST_CHECK_THROW(shm.create(1e19), system_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_size_on_non_existent_shared_memory_section_throws)
@@ -106,5 +107,5 @@ BOOST_AUTO_TEST_CASE(test_size_on_non_existent_shared_memory_section_throws)
    string name("shm" + uniqueid());
 
    shm shm(name);
-   BOOST_CHECK_THROW(shm.size(), exception);
+   BOOST_CHECK_THROW(shm.size(), system_error);
 }

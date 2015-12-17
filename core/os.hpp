@@ -5,14 +5,9 @@
 #include <stdint.h>
 #include <pthread.h>
 
-#include "exceptions.hpp"
-
 // Abstraction of os dependent stuff for easier conversion to other os with boost or whatever later.
 
 namespace potatocache {
-
-   // TODO Change to system_error?
-   struct os_exception : public base_exception {};
 
    // Class representing a raw shared memory section including lock handling for it.
    struct shm
@@ -28,7 +23,7 @@ namespace potatocache {
       //
       // name: the name of the shared memory section alphanum and _ is allowed, length <= 254
       //
-      // throws: std::invalid_argument on bad name, or os_exception if os not compatible
+      // throws: std::invalid_argument on bad name, or std::system_error if os not compatible
       shm(const std::string& name);
       
       // Create shared memory. If created the lock will also be initialized and locked on return.
@@ -37,24 +32,24 @@ namespace potatocache {
       //
       // returns: true if created (and opened), false if already existed
       //
-      // throws: os_exception if failed to create
+      // throws: std::system_error if failed to create
       bool create(uint64_t size);
 
       // Open existing shared memory.
       //
       // returns: true if opened, false if it did not exist or if not yet  resized (= try again)
       //
-      // throws: os_exception if it failed to open
+      // throws: std::system_error if it failed to open
       bool open();
 
       // Destroy shared memory section.
       //
-      // throws: os_exception if failed to remove (will not throw if already removed)
+      // throws: std::system_error if failed to remove (will not throw if already removed)
       void remove();
 
       // Get the current size of the shared memory section.
       //
-      // throws: os_exception if failed to get size
+      // throws: std::system_error if failed to get size
       uint64_t size();
       
       // Get a object pointer based on a byte.
@@ -67,12 +62,12 @@ namespace potatocache {
 
       // Lock shared memory section.
       //
-      // throws: os_exception if failed to lock (due to not initialized)
+      // throws: std::system_error if failed to lock (due to not initialized)
       void lock();
       
       // Unlock shared memory section.
       //
-      // throws: os_exception if failed to unlock (normally never fails)
+      // throws: std::system_error if failed to unlock (normally never fails)
       void unlock();
       
       // Unmaps and closes shared memory.
