@@ -19,8 +19,6 @@ namespace potatocache {
       _shm(name),
       _config(config)
    {
-      // TODO Name should start with '/', contain no other '/' and be max 255 chars, check it.
-
       while (true) {
          if (_shm.open()) {
             // TODO Check size.

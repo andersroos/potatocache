@@ -187,6 +187,7 @@ namespace potatocache {
          if (res) {
             throw os_exception() << fmt("failed to make mutex consistent, errno %d", res);
          }
+         return;
       }
 
       throw os_exception() << fmt("failed to lock mutex, errno %d", res);

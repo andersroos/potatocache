@@ -29,9 +29,11 @@ namespace potatocache {
       // Create an api instance for communication with a potatocache in shared memory. If there is no cache present with
       // that name created one will be created.
       //
-      // name: the key for the cache, used to share cache among processes
+      // name: the key for the cache, used to share cache among processes, max 254 chars alphanum and _
       //
       // config: the cache config, see cache class above
+      //
+      // throws: various std::exception on irrecoverable errors
       api(const std::string& name,
           const config& config);
       
