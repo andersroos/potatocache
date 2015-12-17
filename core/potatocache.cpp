@@ -18,6 +18,8 @@ using namespace std;
 
 namespace potatocache {
 
+   // TODO Move all funcitons to methods?
+   
    // Raii class for setting operation. Bware, if code inside block can throw this should not be used.
    struct op_set
    {
@@ -78,11 +80,33 @@ namespace potatocache {
    }
 
    // Shared memory just created, need to set up all data structures.
-   void create(shm& _shm)
+   void create(shm& _shm, const config& config)
    {
       op_set set(_shm, op_init);
-      
-      
+
+      // Init head.
+      HEAD.process_count = 1;
+      HEAD.pids[0] = getpid();
+      HEAD.mem_size = _shm.size();
+      HEAD.hash_offset = _shm.offset + sizeof(hash_entry);
+      HEAD.hash_size = config.size;
+      HEAD.blocks_offset = align(_shm.page_size, HEAD.hash_offset);
+      HEAD.blocks_size = (HEAD.mem_size - HEAD.blocks_offset) / sizeof(block);
+      HEAD.blocks_free = HEAD.blocks_size;
+      HEAD.free_block_index = 0;
+
+      // Init hash entries.
+      for (uint64_t i = 0; i < HEAD.hash_size; ++i) {
+         hash_entry& h = _shm.ref<hash_entry>(HEAD.hash_offset + sizeof(hash_entry) * i);
+         h.value_index = -1;
+      }
+
+      // Init blocks.
+      int64_t last = -1;
+      for (int64_t i = HEAD.blocks_size - 1; i >= 0; i--) {
+         _shm.ref<block>(HEAD.blocks_offset + sizeof(block) * i).next_block_index = last;
+         last = i;
+      }
    }
    
    api::api(const std::string& name,
@@ -124,7 +148,7 @@ namespace potatocache {
          
          // Try to create if could not open.
          if (_shm.create(config.memory_segment_size)) {
-            create(_shm);
+            create(_shm, config);
             _shm.unlock();
             return;
          }
