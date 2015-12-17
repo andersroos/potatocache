@@ -34,6 +34,17 @@ namespace potatocache {
    private:
       shm& _shm;
    };
+
+   // Return page aligned offset.
+   // TODO Test this.
+   uint64_t align(uint64_t page_size, uint64_t offset)
+   {
+      uint64_t rest = offset % page_size;
+      if (rest) {
+         return offset + page_size - rest;
+      }
+      return offset;
+   }
    
    // Check if recover is needed, try to fix broken cache.
    //
@@ -59,16 +70,19 @@ namespace potatocache {
       }
    }
 
-   // We got lock and we should do an open.
+   // Open an existing, we have lock and should just check pids.
    void open(shm& _shm)
    {
       op_set set(_shm, op_open);
+      // TODO Check other pids, add own pid.
    }
 
-   // We got lock and we should do a create.
+   // Shared memory just created, need to set up all data structures.
    void create(shm& _shm)
    {
       op_set set(_shm, op_init);
+      
+      
    }
    
    api::api(const std::string& name,
@@ -76,7 +90,15 @@ namespace potatocache {
       _shm(name),
       _config(config)
    {
-      // TODO Check size parameters here.
+      uint64_t required_size = _shm.offset + sizeof(mem_header);
+      required_size = align(_shm.page_size, required_size + sizeof(hash_entry) * _config.size);
+      required_size += sizeof(block) * _config.size;
+
+      if (required_size > _config.memory_segment_size) {
+         throw std::invalid_argument(fmt("too litte memory configured, absolute minimum size needed is %lu,"
+                                         " configured is %lu, lower size or raise memory",
+                                         required_size, _config.memory_segment_size));
+      }
 
       for (uint32_t create_open_try_count = 0; create_open_try_count < 10; ++create_open_try_count) {
 
