@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(test_bad_name_raises_exception)
 
 BOOST_AUTO_TEST_CASE(test_create_when_exists_returns_false)
 {
-   string name(uniqueid());
+   string name("shm" + uniqueid());
    shm shm(name);
    BOOST_CHECK(shm.create(256));
    shm.unlock();
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(test_open_returns_false_if_it_does_not_exists)
 
 BOOST_AUTO_TEST_CASE(test_writing_and_reading_data_from_same_process_using_different_shm_works)
 {
-   string name(uniqueid());
+   string name("shm" + uniqueid());
 
    shm shm1(name);
    BOOST_CHECK(shm1.create(256));
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(test_writing_and_reading_data_from_same_process_using_diffe
 
 BOOST_AUTO_TEST_CASE(test_lock_can_be_taken_on_process_death)
 {
-   string name(uniqueid());
+   string name("shm" + uniqueid());
 
    if (fork()) {
       // parent
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(test_lock_can_be_taken_on_process_death)
 
 BOOST_AUTO_TEST_CASE(test_name_is_reusable_after_remove)
 {
-   string name(uniqueid());
+   string name("shm" + uniqueid());
 
    shm shm1(name);
    shm1.create(256);
@@ -93,3 +93,18 @@ BOOST_AUTO_TEST_CASE(test_name_is_reusable_after_remove)
    shm2.remove();
 }
 
+BOOST_AUTO_TEST_CASE(test_create_fails_on_too_big_size)
+{
+   string name("shm" + uniqueid());
+
+   shm shm(name);
+   BOOST_CHECK_THROW(shm.create(1e19), exception);
+}
+
+BOOST_AUTO_TEST_CASE(test_size_on_non_existent_shared_memory_section_throws)
+{
+   string name("shm" + uniqueid());
+
+   shm shm(name);
+   BOOST_CHECK_THROW(shm.size(), exception);
+}

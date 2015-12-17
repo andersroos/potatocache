@@ -117,7 +117,7 @@ namespace potatocache {
       catch (const os_exception& e) {
          shm_unlink(_name.c_str());
          close();
-         throw e;
+         throw;
       }
 
       return true;
@@ -148,7 +148,7 @@ namespace potatocache {
       }
       catch (const os_exception& e) {
          close();
-         throw e;
+         throw;
       }
 
       return true;
