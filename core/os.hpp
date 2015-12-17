@@ -86,7 +86,6 @@ namespace potatocache {
       std::string _name;
       int _fd;
       char* _mem;
-      uint64_t _size;
    };
    
    // Used to lock shm with raii.

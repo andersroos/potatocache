@@ -64,6 +64,7 @@ BOOST_AUTO_TEST_CASE(test_lock_can_be_taken_on_process_death)
       }
       shm_lock lock(shm);
       BOOST_CHECK_EQUAL(1234, shm.ref<uint32_t>(shm.offset));
+      shm.remove();
    }
    else {
       // child
@@ -73,5 +74,22 @@ BOOST_AUTO_TEST_CASE(test_lock_can_be_taken_on_process_death)
       // no unlock
       exit(0);
    }
+}
+
+BOOST_AUTO_TEST_CASE(test_name_is_reusable_after_remove)
+{
+   string name(uniqueid());
+
+   shm shm1(name);
+   shm1.create(256);
+   shm1.ref<uint32_t>(shm1.offset) = 1234;
+   shm1.unlock();
+   shm1.remove();
+
+   shm shm2(name);
+   BOOST_CHECK(not shm2.open());
+   BOOST_CHECK(shm2.create(256));
+   BOOST_CHECK(1234 != shm2.ref<uint32_t>(shm2.offset));
+   shm2.remove();
 }
 

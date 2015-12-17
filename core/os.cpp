@@ -71,8 +71,7 @@ namespace potatocache {
       page_size(sysconf(_SC_PAGESIZE)),
       _name('/' + name),
       _fd(-1),
-      _mem(NULL),
-      _size(0)
+      _mem(NULL)
    {
       auto len = name.size();
       if (len < 1 or 254 < len) {
