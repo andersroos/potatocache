@@ -79,7 +79,7 @@ namespace potatocache {
          throw invalid_argument(fmt("name should be from 1 to 254 chars, \"%s\" is %u", name.c_str(), len));
       }
       
-      if (find_if(++name.begin(), name.end(), [](char c) { return !(isalnum(c) || (c == '_')); }) != name.end()) {
+      if (find_if(name.begin(), name.end(), [](char c) { return !(isalnum(c) || (c == '_')); }) != name.end()) {
          throw invalid_argument(fmt("name should contain only alphanum and _, \"%s\" does not", name.c_str()));
       }
       
@@ -108,10 +108,12 @@ namespace potatocache {
 
          _mem = map(_name, size, _fd);
 
-         init_mutex(MUTEX_PTR);
-         // TODO There is a timing issue here, will handle it with status flag outside this class.
-         lock();
+         memset(_mem, 0, size);
          
+         init_mutex(MUTEX_PTR);
+         // There is a timing issue here when the mutex is created but not locked, will be handled by status flag
+         // outside this class.
+         lock();
       }
       catch (const os_exception& e) {
          shm_unlink(_name.c_str());

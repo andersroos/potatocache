@@ -26,7 +26,7 @@ py-build:
 	(cd py && ./setup.py build_ext -i)
 
 # This will need some improvement. :)
-py-test: clean
+py-test: clean py-build
 	./main.py
 
 clean:
