@@ -13,100 +13,27 @@
 
 using namespace std;
 
-#define HEAD _shm.ref<mem_header>(_shm.offset)
 
 namespace potatocache {
 
-   // TODO Move all funcitons to methods?
-   
    // Raii class for setting operation. Bware, if code inside block can throw this should not be used.
    struct op_set
    {
       op_set(shm& shm, operation op) : _shm(shm)
       {
-         HEAD.op = op;
+         _shm.ref<mem_header>(_shm.offset).op = op;
       }
 
       virtual ~op_set()
       {
-         HEAD.op = op_noop;
+         _shm.ref<mem_header>(_shm.offset).op = op_noop;
       }
 
    private:
       shm& _shm;
    };
 
-   // Return page aligned offset.
-   // TODO Test this.
-   uint64_t align(uint64_t page_size, uint64_t offset)
-   {
-      uint64_t rest = offset % page_size;
-      if (rest) {
-         return offset + page_size - rest;
-      }
-      return offset;
-   }
-   
-   // Check if recover is needed, try to fix broken cache.
-   //
-   // returns: true if no recover needed to if successful recover, false if it is not possible
-   bool recover_p(shm& _shm)
-   {
-      switch (HEAD.op) {
-
-         case op_noop:
-            // The normal case.
-            return true;
-            
-         case op_create:
-            // Create here means we have hit a super small create timing window or a dead creato, not recoverable.
-            return false;
-            
-         case op_init:
-            // We have a dead creator, not recoverable.
-            return false;
-
-         default:
-            throw logic_error(fmt("recover could not handle state %d, this is a bug", HEAD.op));
-      }
-   }
-
-   // Open an existing, we have lock and should just check pids.
-   void open(shm& _shm)
-   {
-      op_set set(_shm, op_open);
-      // TODO Check other pids, add own pid.
-   }
-
-   // Shared memory just created, need to set up all data structures.
-   void create(shm& _shm, const config& config)
-   {
-      op_set set(_shm, op_init);
-
-      // Init head.
-      HEAD.process_count = 1;
-      HEAD.pids[0] = getpid();
-      HEAD.mem_size = _shm.size();
-      HEAD.hash_offset = _shm.offset + sizeof(hash_entry);
-      HEAD.hash_size = config.size;
-      HEAD.blocks_offset = align(_shm.page_size, HEAD.hash_offset);
-      HEAD.blocks_size = (HEAD.mem_size - HEAD.blocks_offset) / sizeof(block);
-      HEAD.blocks_free = HEAD.blocks_size;
-      HEAD.free_block_index = 0;
-
-      // Init hash entries.
-      for (uint64_t i = 0; i < HEAD.hash_size; ++i) {
-         hash_entry& h = _shm.ref<hash_entry>(HEAD.hash_offset + sizeof(hash_entry) * i);
-         h.value_index = -1;
-      }
-
-      // Init blocks.
-      int64_t last = -1;
-      for (int64_t i = HEAD.blocks_size - 1; i >= 0; i--) {
-         _shm.ref<block>(HEAD.blocks_offset + sizeof(block) * i).next_block_index = last;
-         last = i;
-      }
-   }
+   // Public methods.
    
    impl::impl(const std::string& name,
             const config& config) :
@@ -114,7 +41,7 @@ namespace potatocache {
       _config(config)
    {
       uint64_t required_size = _shm.offset + sizeof(mem_header);
-      required_size = align(_shm.page_size, required_size + sizeof(hash_entry) * _config.size);
+      required_size = align(required_size + sizeof(hash_entry) * _config.size);
       required_size += sizeof(block) * _config.size;
 
       if (required_size > _config.memory_segment_size) {
@@ -131,11 +58,11 @@ namespace potatocache {
             try {
                shm_lock lock(_shm);
 
-               if (not recover_p(_shm)) {
+               if (not recover_p()) {
                   _shm.remove();
                   continue;
                }
-               open(_shm);
+               open();
                return;
             }
             catch (const system_error& e) {
@@ -146,8 +73,8 @@ namespace potatocache {
          }
          
          // Try to create if could not open.
-         if (_shm.create(config.memory_segment_size)) {
-            create(_shm, config);
+         if (_shm.create(_config.memory_segment_size)) {
+            create();
             _shm.unlock();
             return;
          }
@@ -159,4 +86,74 @@ namespace potatocache {
    impl::~impl()
    {
    }
+
+   // Private methods.
+   
+   // TODO Test this.
+   uint64_t impl::align(uint64_t offset)
+   {
+      uint64_t rest = offset % _shm.page_size;
+      if (rest) {
+         return offset + _shm.page_size - rest;
+      }
+      return offset;
+   }
+   
+   bool impl::recover_p()
+   {
+      switch (head().op) {
+
+         case op_noop:
+            // The normal case.
+            return true;
+            
+         case op_create:
+            // Create here means we have hit a super small create timing window or a dead creato, not recoverable.
+            return false;
+            
+         case op_init:
+            // We have a dead creator, not recoverable.
+            return false;
+
+         default:
+            throw logic_error(fmt("recover could not handle state %d, this is a bug", head().op));
+      }
+   }
+
+   void impl::open()
+   {
+      op_set set(_shm, op_open);
+      // TODO Check other pids, add own pid.
+   }
+
+   void impl::create()
+   {
+      op_set set(_shm, op_init);
+
+      // Init head.
+      auto head = impl::head();
+      head.process_count = 1;
+      head.pids[0] = getpid();
+      head.mem_size = _shm.size();
+      head.hash_offset = _shm.offset + sizeof(hash_entry);
+      head.hash_size = _config.size;
+      head.blocks_offset = align(head.hash_offset);
+      head.blocks_size = (head.mem_size - head.blocks_offset) / sizeof(block);
+      head.blocks_free = head.blocks_size;
+      head.free_block_index = 0;
+
+      // Init hash entries.
+      for (uint64_t i = 0; i < head.hash_size; ++i) {
+         hash_entry& h = _shm.ref<hash_entry>(head.hash_offset + sizeof(hash_entry) * i);
+         h.value_index = -1;
+      }
+
+      // Init blocks.
+      int64_t last = -1;
+      for (int64_t i = head.blocks_size - 1; i >= 0; i--) {
+         _shm.ref<block>(head.blocks_offset + sizeof(block) * i).next_block_index = last;
+         last = i;
+      }
+   }
+
 }
