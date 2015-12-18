@@ -1,11 +1,12 @@
 
 #include <stdlib.h>
 
+#include <iostream>
+
 #include "test.hpp"
+#include "utils.hpp"
 
 using namespace std;
-
-unsigned int seed = time(NULL);
 
 // Return a random alphanumeric string.
 string uniqueid(uint32_t length)
@@ -17,9 +18,16 @@ string uniqueid(uint32_t length)
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
       "abcdefghijklmnopqrstuvwxyz";
 
+   unsigned int seed = now_us();
     for (int i = 0; i < length; ++i) {
         s += alphanum[rand_r(&seed) % (sizeof(alphanum) - 1)];
     }
 
     return s;
+}
+
+std::string unique_shm_name()
+{
+   string s("potato_test_shm_" + uniqueid());
+   return s;
 }

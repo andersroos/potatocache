@@ -42,6 +42,7 @@ clean:
 	rm -f py/potatocache/*.so
 	rm -f run-tests main Makefile.bak
 	rm -f core/*.o core/*.gcda core/*.gcno
+	rm -f /run/shm/potato_test_shm_*
 
 all-test: test py-test
 

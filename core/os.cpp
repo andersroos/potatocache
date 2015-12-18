@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include <system_error>
 #include <stdexcept>
@@ -109,7 +110,7 @@ namespace potatocache {
          _mem = map(_name, size, _fd);
 
          ::memset(_mem, 0, size);
-         
+
          init_mutex(MUTEX_PTR);
          // There is a timing issue here when the mutex is created but not locked, will be handled by status flag
          // outside this class.
@@ -157,6 +158,7 @@ namespace potatocache {
 
    void shm::remove()
    {
+      close();
       if (::shm_unlink(_name.c_str()) < 0) {
          if (errno != ENOENT) {
             throw system_error(errno, system_category(), fmt("failed unlink shared memory section %s", _name.c_str()));
@@ -176,7 +178,7 @@ namespace potatocache {
    void shm::lock()
    {
       auto mutex = MUTEX_PTR;
-      
+
       int res;
 
       res = ::pthread_mutex_lock(mutex);
@@ -201,6 +203,19 @@ namespace potatocache {
       if (res) {
          throw system_error(res, system_category(), "failed to unlock mutex");
       }
+   }
+
+   uint32_t shm::pid()
+   {
+      return getpid();
+   }
+
+   bool shm::process_exists(uint32_t pid)
+   {
+      if (::kill(pid, 0)) {
+         return false;
+      }
+      return true;
    }
    
    shm::~shm()

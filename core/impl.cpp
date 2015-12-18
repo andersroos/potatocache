@@ -133,7 +133,7 @@ namespace potatocache {
       // Init head.
       auto head = impl::head();
       head.process_count = 1;
-      head.pids[0] = getpid();
+      head.pids[0] = _shm.pid();
       head.mem_size = _shm.size();
       head.hash_offset = _shm.offset + sizeof(hash_entry_t);
       head.hash_size = _config.size;

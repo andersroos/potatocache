@@ -1,4 +1,6 @@
 
+#include <sys/wait.h>
+
 #include <iostream>
 #include <system_error>
 
@@ -23,7 +25,7 @@ BOOST_AUTO_TEST_CASE(test_bad_name_raises_exception)
 
 BOOST_AUTO_TEST_CASE(test_create_when_exists_returns_false)
 {
-   string name("shm" + uniqueid());
+   string name(unique_shm_name());
    shm shm(name);
    BOOST_CHECK(shm.create(256));
    shm.unlock();
@@ -33,7 +35,7 @@ BOOST_AUTO_TEST_CASE(test_create_when_exists_returns_false)
 
 BOOST_AUTO_TEST_CASE(test_open_returns_false_if_it_does_not_exists)
 {
-   string name(uniqueid());
+   string name(unique_shm_name());
    shm shm(name);
    BOOST_CHECK(!shm.open());
    shm.remove();
@@ -41,7 +43,7 @@ BOOST_AUTO_TEST_CASE(test_open_returns_false_if_it_does_not_exists)
 
 BOOST_AUTO_TEST_CASE(test_writing_and_reading_data_from_same_process_using_different_shm_works)
 {
-   string name("shm" + uniqueid());
+   string name(unique_shm_name());
 
    shm shm1(name);
    BOOST_CHECK(shm1.create(256));
@@ -55,16 +57,18 @@ BOOST_AUTO_TEST_CASE(test_writing_and_reading_data_from_same_process_using_diffe
 
 BOOST_AUTO_TEST_CASE(test_lock_can_be_taken_on_process_death)
 {
-   string name("shm" + uniqueid());
+   string name(unique_shm_name());
 
-   if (fork()) {
+   pid_t child_pid;
+   if (child_pid = fork()) {
       // parent
       shm shm(name);
-      while (not shm.open()) {
-         usleep(100);
+      while (not shm.open()) { usleep(100); }
+      {
+         shm_lock lock(shm);
+         BOOST_CHECK_EQUAL(1234, shm.ref<uint32_t>(shm.offset));
       }
-      shm_lock lock(shm);
-      BOOST_CHECK_EQUAL(1234, shm.ref<uint32_t>(shm.offset));
+      ::waitpid(child_pid, NULL, 0); 
       shm.remove();
    }
    else {
@@ -72,14 +76,14 @@ BOOST_AUTO_TEST_CASE(test_lock_can_be_taken_on_process_death)
       shm shm(name);
       shm.create(256);
       shm.ref<uint32_t>(shm.offset) = 1234;
-      // no unlock
+      // no unlock because we are testing it
       exit(0);
    }
 }
 
 BOOST_AUTO_TEST_CASE(test_name_is_reusable_after_remove)
 {
-   string name("shm" + uniqueid());
+   string name(unique_shm_name());
 
    shm shm1(name);
    shm1.create(256);
@@ -96,7 +100,7 @@ BOOST_AUTO_TEST_CASE(test_name_is_reusable_after_remove)
 
 BOOST_AUTO_TEST_CASE(test_create_fails_on_too_big_size)
 {
-   string name("shm" + uniqueid());
+   string name(unique_shm_name());
 
    shm shm(name);
    BOOST_CHECK_THROW(shm.create(1e19), system_error);
@@ -104,8 +108,24 @@ BOOST_AUTO_TEST_CASE(test_create_fails_on_too_big_size)
 
 BOOST_AUTO_TEST_CASE(test_size_on_non_existent_shared_memory_section_throws)
 {
-   string name("shm" + uniqueid());
+   string name(unique_shm_name());
 
    shm shm(name);
    BOOST_CHECK_THROW(shm.size(), system_error);
+}
+
+BOOST_AUTO_TEST_CASE(test_getting_pid_and_existance_of_process)
+{
+   BOOST_CHECK(shm::process_exists(shm::pid()));
+
+   pid_t child_pid;
+   if (child_pid = fork()) {
+      // parent
+      ::waitpid(child_pid, NULL, 0); 
+      BOOST_CHECK(not shm::process_exists(child_pid));
+   }
+   else {
+      // child
+      exit(0);
+   }
 }

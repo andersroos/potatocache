@@ -69,6 +69,16 @@ namespace potatocache {
       //
       // throws: std::system_error if failed to unlock (normally never fails)
       void unlock();
+
+      // Get the pid if the process.
+      //
+      // returns: pid
+      static uint32_t pid();
+
+      // Find out if process exists (note that pids are recycled).
+      //
+      // returns: true if exists, false otherwise (or if unable to find out)
+      static bool process_exists(uint32_t pid);
       
       // Unmaps and closes shared memory.
       virtual ~shm();

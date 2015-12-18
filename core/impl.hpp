@@ -13,6 +13,10 @@ namespace potatocache {
 
    struct impl {
 
+      //
+      // Public api.
+      //
+      
       impl(const std::string& name, const config& config);
 
       std::string get(const std::string& key, bool& missing_out);
@@ -20,8 +24,10 @@ namespace potatocache {
       void put(const std::string& key, const std::string& value);
 
       virtual ~impl();
-      
-   private:
+
+      //
+      // Internal API.
+      //
 
       // Acces mem header.
       inline mem_header_t& head() { return _shm.ref<mem_header_t>(_shm.offset); }
@@ -51,7 +57,7 @@ namespace potatocache {
       
       // Shared memory just created, need to set up all data structures.
       void create();
-      
+
       shm _shm;
       config _config;
    };
