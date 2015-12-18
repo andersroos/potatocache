@@ -5,11 +5,11 @@
 #include <iostream>
 #include <system_error>
 
-#include "potatocache.hpp"
 #include "shared.hpp"
 #include "utils.hpp"
 #include "os.hpp"
-#include "shared.hpp"
+#include "impl.hpp"
+#include "config.hpp"
 
 using namespace std;
 
@@ -108,7 +108,7 @@ namespace potatocache {
       }
    }
    
-   api::api(const std::string& name,
+   impl::impl(const std::string& name,
             const config& config) :
       _shm(name),
       _config(config)
@@ -156,7 +156,7 @@ namespace potatocache {
       throw logic_error("tried to open/create 10 times, but no exceptions, this is probably a bug");
    }
 
-   api::~api()
+   impl::~impl()
    {
    }
 }

@@ -9,7 +9,7 @@ EXTRA_LIBS ?=
 # TODO Find some way to keep those in sync or maybe it does not matter. Just build with both py and c.
 CXXFLAGS = -pthread -DNDEBUG -g -fwrapv -O2 -Wall -Wno-unused-result -g -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -fPIC -std=c++11 $(EXTRA_CXXFLAGS)
 
-OBJS = core/os.o core/potatocache.o core/utils.o
+OBJS = core/os.o core/impl.o core/utils.o
 
 LIBS = -lrt -lpthread $(EXTRA_LIBS)
 
@@ -64,11 +64,13 @@ coverage: clean
 
 # DO NOT DELETE
 
+core/impl.o: core/shared.hpp core/utils.hpp core/os.hpp
 core/main.o: core/utils.hpp core/os.hpp
 core/os-test.o: core/test.hpp core/os.hpp
 core/os.o: core/os.hpp core/utils.hpp
-core/potatocache.o: core/potatocache.hpp core/os.hpp core/shared.hpp
-core/potatocache.o: core/utils.hpp
+core/potatocache.o: core/potatocache.hpp core/config.hpp core/impl.hpp
+core/potatocache.o: core/shared.hpp core/utils.hpp core/os.hpp
 core/test.o: core/test.hpp
 core/utils.o: core/utils.hpp
-core/potatocache.o: core/os.hpp
+core/impl.o: core/config.hpp
+core/potatocache.o: core/config.hpp core/impl.hpp

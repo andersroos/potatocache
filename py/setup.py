@@ -103,7 +103,7 @@ setup(
                            ],
                            sources=[
                                'potatocache/cachemodule.cpp',
-                               '../core/potatocache.cpp',
+                               '../core/impl.cpp',
                                '../core/utils.cpp',
                                '../core/os.cpp',
                            ],

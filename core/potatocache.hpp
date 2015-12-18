@@ -2,26 +2,14 @@
 #ifndef POTATOCACHE_POTATOCACHE_HPP
 #define POTATOCACHE_POTATOCACHE_HPP
 
-#include <stdint.h>
-#include <string>
-
-#include "os.hpp"
+#include "config.hpp"
+#include "impl.hpp"
 
 // See 9a0617dd8a259b6eda06c3fa8949f1c86231fe9a for full api sketch.
 
-// The contents of this file is considered public api, the rest of the code is not.
+// The contents of this file and config.hpp is considered public api, the rest of the code is not.
 namespace potatocache {
    
-   // Configration object for the cache.
-   struct config {
-      
-      // Size in number of entries.
-      uint64_t size = 1024;
-      
-      // Size of the shared mem segment to use for the chache.
-      uint64_t memory_segment_size = 2 * 1024 * 1024;
-   };
-
    // Main api class for communicating with potatocache. All methods are atomic if not othervise stated and may safely
    // be called in a multithreaded environment.
    struct api {
@@ -35,8 +23,7 @@ namespace potatocache {
       // processes that opens a created cache can't configure it
       //
       // throws: various std::exception on irrecoverable errors
-      api(const std::string& name,
-          const config& config);
+      api(const std::string& name, const config& config) : _impl(name, config) {}
       
       // Get value from cache.
       //
@@ -45,8 +32,7 @@ namespace potatocache {
       // missing_out: set to true if key does not exist in cache, otherwise set to false
       //
       // returns: the value, will be empty string if missing_out == true
-      std::string get(const std::string& key,
-                      bool& missing_out);
+      std::string get(const std::string& key, bool& missing_out) { return _impl.get(key, missing_out); }
 
       // Put value into cache.
       //
@@ -55,16 +41,14 @@ namespace potatocache {
       // value: the value to put into the cache
       //
       // throws: potatocache::exception if key or value are too large or if cache is full
-      void put(const std::string& key,
-               const std::string& value);
+      void put(const std::string& key, const std::string& value) { _impl.put(key, value); }
 
       // Removes the cache if last process connected.
-      virtual ~api();
+      virtual ~api() {}
       
    private:
 
-      shm _shm;
-      config _config;
+      impl _impl;
    };
    
 }
