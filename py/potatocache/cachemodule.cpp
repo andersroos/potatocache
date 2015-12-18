@@ -13,9 +13,9 @@ create(PyObject *self, PyObject *args)
     }
 
     printf("name  %s\n", name);
-    printf("block %lu\n", sizeof(potatocache::block));
-    printf("entry %lu\n", sizeof(potatocache::hash_entry));
-    printf("head  %lu\n", sizeof(potatocache::mem_header));
+    printf("block %lu\n", sizeof(potatocache::block_t));
+    printf("entry %lu\n", sizeof(potatocache::hash_entry_t));
+    printf("head  %lu\n", sizeof(potatocache::mem_header_t));
 
     potatocache::config config;
     potatocache::api cache(name, config);

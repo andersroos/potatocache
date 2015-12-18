@@ -10,7 +10,7 @@
 namespace potatocache {
 
    // Enum for storing what operation is in progress.
-   enum operation {
+   enum operation_t {
       
       // Create in progress but mem has just been created and cleared, mutex not even initialized yet. Recovery should
       // just recreted the shared memory section.
@@ -34,10 +34,10 @@ namespace potatocache {
    };
    
    // Header for shared memory segment, stored at offset in shared memory segment.
-   struct mem_header {
+   struct mem_header_t {
       
       // Storing current operation for help with recovery if process is killed during operation.
-      operation op;
+      operation_t op;
       
       // Number of processes connected to the cache. This count may not be correct of cache did not shut down
       // gracefully.
@@ -70,7 +70,7 @@ namespace potatocache {
    };
    
    // A hash table entry.
-   struct hash_entry {
+   struct hash_entry_t {
       
       // The hashed key.
       uint64_t hash;
@@ -86,7 +86,7 @@ namespace potatocache {
    };
 
    // Memory block for storing values.
-   struct block {
+   struct block_t {
 
       // Index of next block, -1 if no more blocks in value (size is also usable).
       int64_t next_block_index;

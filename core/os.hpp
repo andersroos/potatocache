@@ -53,11 +53,11 @@ namespace potatocache {
       uint64_t size();
       
       // Get a object pointer based on a byte.
-      template<class T>
+      template<class T> inline
       T* ptr(uint64_t byte_offset) { return reinterpret_cast<T*>(_mem + byte_offset); }
 
       // Get a object reference based on a byte.
-      template<class T>
+      template<class T> inline
       T& ref(uint64_t byte_offset) { return *reinterpret_cast<T*>(_mem + byte_offset); }
 
       // Lock shared memory section.

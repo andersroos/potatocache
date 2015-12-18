@@ -19,14 +19,14 @@ namespace potatocache {
    // Raii class for setting operation. Bware, if code inside block can throw this should not be used.
    struct op_set
    {
-      op_set(shm& shm, operation op) : _shm(shm)
+      op_set(shm& shm, operation_t op) : _shm(shm)
       {
-         _shm.ref<mem_header>(_shm.offset).op = op;
+         _shm.ref<mem_header_t>(_shm.offset).op = op;
       }
 
       virtual ~op_set()
       {
-         _shm.ref<mem_header>(_shm.offset).op = op_noop;
+         _shm.ref<mem_header_t>(_shm.offset).op = op_noop;
       }
 
    private:
@@ -40,9 +40,9 @@ namespace potatocache {
       _shm(name),
       _config(config)
    {
-      uint64_t required_size = _shm.offset + sizeof(mem_header);
-      required_size = align(required_size + sizeof(hash_entry) * _config.size);
-      required_size += sizeof(block) * _config.size;
+      uint64_t required_size = _shm.offset + sizeof(mem_header_t);
+      required_size = align(required_size + sizeof(hash_entry_t) * _config.size);
+      required_size += sizeof(block_t) * _config.size;
 
       if (required_size > _config.memory_segment_size) {
          throw std::invalid_argument(fmt("too litte memory configured, absolute minimum size needed is %lu,"
@@ -135,23 +135,22 @@ namespace potatocache {
       head.process_count = 1;
       head.pids[0] = getpid();
       head.mem_size = _shm.size();
-      head.hash_offset = _shm.offset + sizeof(hash_entry);
+      head.hash_offset = _shm.offset + sizeof(hash_entry_t);
       head.hash_size = _config.size;
       head.blocks_offset = align(head.hash_offset);
-      head.blocks_size = (head.mem_size - head.blocks_offset) / sizeof(block);
+      head.blocks_size = (head.mem_size - head.blocks_offset) / sizeof(block_t);
       head.blocks_free = head.blocks_size;
       head.free_block_index = 0;
 
       // Init hash entries.
       for (uint64_t i = 0; i < head.hash_size; ++i) {
-         hash_entry& h = _shm.ref<hash_entry>(head.hash_offset + sizeof(hash_entry) * i);
-         h.value_index = -1;
+         entry(i).value_index = -1;
       }
 
       // Init blocks.
       int64_t last = -1;
       for (int64_t i = head.blocks_size - 1; i >= 0; i--) {
-         _shm.ref<block>(head.blocks_offset + sizeof(block) * i).next_block_index = last;
+         block(i).next_block_index = last;
          last = i;
       }
    }
