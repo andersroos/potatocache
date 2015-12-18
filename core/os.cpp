@@ -158,8 +158,9 @@ namespace potatocache {
    void shm::remove()
    {
       if (_mem) {
-         ::pthread_mutex_unlock(MUTEX_PTR);
-         ::pthread_mutex_destroy(MUTEX_PTR);
+         auto mutex = MUTEX_PTR;
+         ::pthread_mutex_unlock(mutex);
+         ::pthread_mutex_destroy(mutex);
       }
       close();
       if (::shm_unlink(_name.c_str()) < 0) {
@@ -180,8 +181,11 @@ namespace potatocache {
 
    void shm::lock()
    {
+      if (not _mem) {
+         return;
+      }
+      
       auto mutex = MUTEX_PTR;
-
       int res;
 
       res = ::pthread_mutex_lock(mutex);
@@ -202,6 +206,10 @@ namespace potatocache {
 
    void shm::unlock()
    {
+      if (not _mem) {
+         return;
+      }
+      
       auto res = ::pthread_mutex_unlock(MUTEX_PTR);
       if (res) {
          throw system_error(res, system_category(), "failed to unlock mutex");

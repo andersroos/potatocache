@@ -89,7 +89,8 @@ namespace potatocache {
          auto pid = shm::pid();
          
          shm_lock lock(_shm);
-         if (head.process_count > 1) {
+         
+         if (recover_p() and head.process_count > 1) {
             
             // Remove myself from pid list if I am there.
             for (uint32_t i = 0; i < PIDS_SIZE; ++i) {
