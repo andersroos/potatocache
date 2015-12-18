@@ -13,7 +13,11 @@ OBJS = core/os.o core/impl.o core/utils.o
 
 LIBS = -lrt -lpthread $(EXTRA_LIBS)
 
-TEST_OBJS = core/run-tests.o core/test.cpp core/os-test.cpp
+TEST_OBJS = \
+	core/run-tests.o \
+	core/test.cpp \
+	core/os-test.cpp \
+	core/impl-test.cpp \
 
 TEST_LIBS = -lboost_unit_test_framework
 
@@ -65,13 +69,14 @@ coverage: clean
 
 # DO NOT DELETE
 
-core/impl.o: core/shared.hpp core/utils.hpp core/os.hpp
+core/impl-test.o: core/test.hpp core/impl.hpp core/config.hpp core/os.hpp
+core/impl-test.o: core/shared.hpp
+core/impl.o: core/shared.hpp core/utils.hpp core/os.hpp core/impl.hpp
+core/impl.o: core/config.hpp
 core/main.o: core/utils.hpp core/os.hpp
 core/os-test.o: core/test.hpp core/os.hpp
 core/os.o: core/os.hpp core/utils.hpp
-core/potatocache.o: core/potatocache.hpp core/config.hpp core/impl.hpp
-core/potatocache.o: core/shared.hpp core/utils.hpp core/os.hpp
-core/test.o: core/test.hpp
+core/test.o: core/test.hpp core/utils.hpp
 core/utils.o: core/utils.hpp
-core/impl.o: core/config.hpp
-core/potatocache.o: core/config.hpp core/impl.hpp
+core/impl.o: core/config.hpp core/os.hpp core/shared.hpp
+core/potatocache.o: core/config.hpp core/impl.hpp core/os.hpp core/shared.hpp

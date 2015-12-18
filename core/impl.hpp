@@ -3,6 +3,7 @@
 #define POTATOCACHE_IMPL_HPP
 
 #include <string>
+#include <iostream>
 
 #include "config.hpp"
 #include "os.hpp"

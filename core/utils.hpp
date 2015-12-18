@@ -11,7 +11,4 @@ std::string fmt(const char* format, ...);
 // Return the current time in microseconds.
 uint64_t now_us();
 
-// Return the error as a string.
-std::string errstr(int errnum);
-
 #endif

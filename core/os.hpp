@@ -73,12 +73,12 @@ namespace potatocache {
       // Get the pid if the process.
       //
       // returns: pid
-      static uint32_t pid();
+      static pid_t pid();
 
       // Find out if process exists (note that pids are recycled).
       //
       // returns: true if exists, false otherwise (or if unable to find out)
-      static bool process_exists(uint32_t pid);
+      static bool process_exists(pid_t pid);
       
       // Unmaps and closes shared memory.
       virtual ~shm();

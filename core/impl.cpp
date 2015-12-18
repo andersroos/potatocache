@@ -36,7 +36,7 @@ namespace potatocache {
    // Public methods.
    
    impl::impl(const std::string& name,
-            const config& config) :
+              const config& config) :
       _shm(name),
       _config(config)
    {
@@ -54,7 +54,6 @@ namespace potatocache {
 
          // Try to open first.
          if (_shm.open()) {
-
             try {
                shm_lock lock(_shm);
 
@@ -85,6 +84,25 @@ namespace potatocache {
 
    impl::~impl()
    {
+      {
+         auto& head = impl::head();
+         auto pid = shm::pid();
+         
+         shm_lock lock(_shm);
+         if (head.process_count > 1) {
+            
+            // Remove myself from pid list if I am there.
+            for (uint32_t i = 0; i < PIDS_SIZE; ++i) {
+               if (head.pids[i] == pid) {
+                  head.process_count--;
+                  head.pids[i] = 0;
+                  break;
+               }
+            }
+            return;
+         }
+      }
+      _shm.remove();
    }
 
    // Private methods.
@@ -123,7 +141,31 @@ namespace potatocache {
    void impl::open()
    {
       op_set set(_shm, op_open);
-      // TODO Check other pids, add own pid.
+
+      auto& head = impl::head();
+
+      // Update current list with still running pids.
+      head.process_count = 0;
+      for (uint64_t i = 0; i < PIDS_SIZE; ++i) {
+         auto pid = head.pids[i];
+         if (pid and shm::process_exists(pid)) {
+            head.process_count += 1;
+         }
+         else {
+            head.pids[i] = 0;
+         }
+      }
+
+      // Add self.
+      if (head.process_count < PIDS_SIZE) {
+         head.process_count += 1;
+         for (uint64_t i = 0; i < PIDS_SIZE; ++i) {
+            if (not head.pids[i]) {
+               head.pids[i] = shm::pid();
+               break;
+            }
+         }
+      }
    }
 
    void impl::create()
@@ -131,13 +173,13 @@ namespace potatocache {
       op_set set(_shm, op_init);
 
       // Init head.
-      auto head = impl::head();
+      auto& head = impl::head();
       head.process_count = 1;
       head.pids[0] = _shm.pid();
       head.mem_size = _shm.size();
-      head.hash_offset = _shm.offset + sizeof(hash_entry_t);
+      head.hash_offset = _shm.offset + sizeof(mem_header_t);
       head.hash_size = _config.size;
-      head.blocks_offset = align(head.hash_offset);
+      head.blocks_offset = align(head.hash_offset + sizeof(hash_entry_t) * head.hash_size);
       head.blocks_size = (head.mem_size - head.blocks_offset) / sizeof(block_t);
       head.blocks_free = head.blocks_size;
       head.free_block_index = 0;

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define BLOCK_SIZE 64
+#define PIDS_SIZE 32
 
 // Data in the shared section.
 
@@ -45,7 +46,7 @@ namespace potatocache {
 
       // Pids connected to the cache. Used in conjunction with process_count to try too figure out when cahce should be
       // destroyed. This list will be checked agains at open.
-      pid_t pids[32];
+      pid_t pids[PIDS_SIZE];
       
       // Size of shared memory in bytes.
       uint64_t mem_size;

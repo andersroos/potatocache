@@ -117,8 +117,7 @@ namespace potatocache {
          lock();
       }
       catch (const system_error& e) {
-         ::shm_unlink(_name.c_str());
-         close();
+         remove();
          throw;
       }
 
@@ -158,6 +157,10 @@ namespace potatocache {
 
    void shm::remove()
    {
+      if (_mem) {
+         ::pthread_mutex_unlock(MUTEX_PTR);
+         ::pthread_mutex_destroy(MUTEX_PTR);
+      }
       close();
       if (::shm_unlink(_name.c_str()) < 0) {
          if (errno != ENOENT) {
@@ -205,12 +208,12 @@ namespace potatocache {
       }
    }
 
-   uint32_t shm::pid()
+   pid_t shm::pid()
    {
       return getpid();
    }
 
-   bool shm::process_exists(uint32_t pid)
+   bool shm::process_exists(pid_t pid)
    {
       if (::kill(pid, 0)) {
          return false;

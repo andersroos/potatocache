@@ -34,8 +34,3 @@ uint64_t now_us() {
    return now.tv_sec * 1000000 + now.tv_usec;
 }
 
-std::string errstr(int errnum) {
-   std::string res(strerror(errnum));
-   std::transform(res.begin(), res.end(), res.begin(), ::tolower);
-   return res;
-}

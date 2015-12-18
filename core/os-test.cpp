@@ -1,4 +1,5 @@
 
+#include <boost/test/unit_test.hpp>
 #include <sys/wait.h>
 
 #include <iostream>
@@ -7,8 +8,6 @@
 #include "test.hpp"
 #include "os.hpp"
 
-#define BOOST_TEST_MODULE os test
-#include <boost/test/unit_test.hpp>
 
 using namespace potatocache;
 using namespace std;
@@ -48,6 +47,7 @@ BOOST_AUTO_TEST_CASE(test_writing_and_reading_data_from_same_process_using_diffe
    shm shm1(name);
    BOOST_CHECK(shm1.create(256));
    shm1.ref<uint32_t>(shm1.offset) = 1234;
+   shm1.unlock();
 
    shm shm2(name);
    shm2.open();
@@ -95,6 +95,7 @@ BOOST_AUTO_TEST_CASE(test_name_is_reusable_after_remove)
    BOOST_CHECK(not shm2.open());
    BOOST_CHECK(shm2.create(256));
    BOOST_CHECK(1234 != shm2.ref<uint32_t>(shm2.offset));
+   shm2.unlock();
    shm2.remove();
 }
 
