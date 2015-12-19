@@ -36,11 +36,11 @@ namespace potatocache {
 
       // Put value into cache.
       //
-      // key: the key for the value
+      // key: the key for the value, max length 31
       //
       // value: the value to put into the cache
       //
-      // throws: potatocache::exception if key or value are too large or if cache is full
+      // throws: invalid_argument if key is too large and length_error if value is too large or if cache is full
       void put(const std::string& key, const std::string& value) { _impl.put(key, value); }
 
       // Removes the cache if last process connected.

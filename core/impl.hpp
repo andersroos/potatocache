@@ -59,6 +59,9 @@ namespace potatocache {
       // Shared memory just created, need to set up all data structures.
       void create();
 
+      // Hash key to an int.
+      uint64_t hash(const std::string& key);
+      
       shm _shm;
       config _config;
    };

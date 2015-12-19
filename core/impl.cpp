@@ -82,6 +82,22 @@ namespace potatocache {
       throw logic_error("tried to open/create 10 times, but no exceptions, this is probably a bug");
    }
 
+   void impl::put(const std::string& key, const std::string& value)
+   {
+      if (key.size() > 31) {
+         throw length_error(fmt("key is too long, was %u", key.size()));
+      }
+
+      // uint32_t hash = impl::hash(key);
+      
+      shm_lock lock(_shm);
+      if (not recover_p()) {
+         // TODO What todo if irrecoverrable here? Reinit? Or does recover do that?
+      }
+      op_set set(_shm, op_put);
+      
+   }
+   
    impl::~impl()
    {
       {
@@ -108,7 +124,6 @@ namespace potatocache {
 
    // Private methods.
    
-   // TODO Test this.
    uint64_t impl::align(uint64_t offset)
    {
       uint64_t rest = offset % _shm.page_size;
@@ -198,4 +213,14 @@ namespace potatocache {
       }
    }
 
+   uint64_t impl::hash(const string& key)
+   {
+      uint64_t hash = 0;
+      const char* str = key.c_str();
+      while (*str) {
+         hash = ((hash << 5) + hash) + *str++;
+      }
+      return hash;
+   }
+   
 }
