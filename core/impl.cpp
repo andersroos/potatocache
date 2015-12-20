@@ -229,7 +229,7 @@ namespace potatocache {
 
       return res;
    }
-   
+
    impl::~impl()
    {
       {
