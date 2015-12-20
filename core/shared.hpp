@@ -79,7 +79,7 @@ namespace potatocache {
       // The full key (0 terminated string -> max length 31 chars).
       char key[32];
 
-      // Index of value block, -1 if not used hash entry.
+      // Index of value block, -1 if not used.
       int64_t value_index;
 
       // The size of the value in chars.

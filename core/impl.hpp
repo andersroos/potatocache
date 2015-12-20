@@ -61,6 +61,9 @@ namespace potatocache {
 
       // Hash key to an int.
       uint64_t hash(const std::string& key);
+
+      // Dump shared memory content on stdout.
+      void dump();
       
       shm _shm;
       config _config;
