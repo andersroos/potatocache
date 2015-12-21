@@ -221,7 +221,7 @@ namespace potatocache {
       while (data_size > 0) {
          auto& block = impl::block(data_index);
          auto len = min(data_size, int64_t(sizeof(block_t::data)));
-         res.replace(target_index, len, block.data, len); // TODO Replaces in place??
+         res.replace(target_index, len, block.data, len); // At least gcc stdlib does this in place.
          data_index = block.next_block_index;
          data_size -= sizeof(block_t::data);
          target_index += sizeof(block_t::data);
