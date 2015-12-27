@@ -18,6 +18,7 @@ TEST_OBJS = \
 	core/test.cpp \
 	core/os-test.cpp \
 	core/impl-test.cpp \
+	core/log-test.cpp \
 
 TEST_LIBS = -lboost_unit_test_framework
 

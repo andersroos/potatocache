@@ -11,7 +11,7 @@
 #define LOG_ERROR(FORMAT, ...)   log(potatocache::log_level::ERROR, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__)
 #define LOG_WARNING(FORMAT, ...) log(potatocache::log_level::WARNING, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__)
 #define LOG_INFO(FORMAT, ...)    log(potatocache::log_level::INFO, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__)
-#define LOG_DEBUG(FORMAT, ...)   log(potatocache::log_level::DEBUG, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__) }
+#define LOG_DEBUG(FORMAT, ...)   log(potatocache::log_level::DEBUG, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__)
 // TODO Remove LOG level debug or, have macro with if statement?
 
 namespace potatocache {
