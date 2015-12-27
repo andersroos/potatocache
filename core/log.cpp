@@ -28,7 +28,7 @@ namespace potatocache {
   
    void log(const uint32_t& level, const char* file, int line, const char* format, ...)
    {
-      if (log_stream and level > log_level_filter) {
+      if (log_stream == NULL or level > log_level_filter) {
          return;
       }
       
