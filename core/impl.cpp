@@ -62,15 +62,19 @@ namespace potatocache {
 
                if (not recover_p()) {
                   _shm.remove();
+                  LOG_WARNING("opened cache '%s' in bad irrecoverable state, removing it to recreate a healthy one",
+                              name.c_str());
                   continue;
                }
                auto process_count = open();
-               LOG_INFO("Opened cache '%s', size is %d bytes, %d proceses attached.", name.c_str(), _shm.size(),
+               LOG_INFO("opened cache '%s', size is %d bytes, %d proceses attached", name.c_str(), _shm.size(),
                         process_count);
                return;
             }
             catch (const system_error& e) {
                // Lock (or remove) failed (probably not initializsed yet), creator dead?
+               LOG_WARNING("failed to open cache '%s' in unknown way, removing it to recreate a healthy one",
+                           name.c_str());
                _shm.remove();
                continue;
             }
@@ -80,12 +84,12 @@ namespace potatocache {
          if (_shm.create(_config.memory_segment_size)) {
             create();
             _shm.unlock();
-            LOG_INFO("Created cache '%s', size is %d bytes.", name.c_str(), _shm.size());
+            LOG_INFO("created cache '%s', size is %d bytes", name.c_str(), _shm.size());
             return;
          }
       }
 
-      throw logic_error("tried to open/create 10 times, but no exceptions, this is probably a bug");
+      throw logic_error("tried to open/create 10 times, but no exceptions thrown, this is probably a bug");
    }
 
    void impl::put(const std::string& key, const std::string& value)
@@ -253,12 +257,12 @@ namespace potatocache {
                   break;
                }
             } 
-            LOG_INFO("Closed cache '%s'.", _name.c_str());
+            LOG_INFO("closed cache '%s'", _name.c_str());
             return;
          }
       }
       _shm.remove();
-      LOG_INFO("Removed cache '%s' (was last process attached).", _name.c_str());
+      LOG_INFO("removed cache '%s' (was last process attached)", _name.c_str());
    }
 
    // Private methods.
