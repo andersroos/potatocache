@@ -105,6 +105,7 @@ setup(
                                'potatocache/cachemodule.cpp',
                                '../core/impl.cpp',
                                '../core/utils.cpp',
+                               '../core/log.cpp',
                                '../core/os.cpp',
                            ],
                            libraries=[

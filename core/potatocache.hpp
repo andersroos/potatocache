@@ -4,12 +4,13 @@
 
 #include "config.hpp"
 #include "impl.hpp"
+#include "log.hpp"
 
 // See 9a0617dd8a259b6eda06c3fa8949f1c86231fe9a for full api sketch.
 
 // The contents of this file and config.hpp is considered public api, the rest of the code is not.
 namespace potatocache {
-   
+
    // Main api class for communicating with potatocache. All methods are atomic if not othervise stated and may safely
    // be called in a multithreaded environment.
    struct api {
@@ -43,11 +44,19 @@ namespace potatocache {
       // throws: invalid_argument if key is too large and length_error if value is too large or if cache is full
       void put(const std::string& key, const std::string& value) { _impl.put(key, value); }
 
+      // Set ostream for logging. This is set globally for all instances in this process, hence static. By default the
+      // logging is turned off.
+      //
+      // stream: out stream to log to, set to NULL to turn off
+      static void set_log_output(std::ostream* stream) { potatocache::set_log_output(stream); }
+
+      // Set log level. This is set globally for all instances in this process, hence static. Default is INFO.
+      static void set_log_level(const log_level& level) { potatocache::set_log_level(level); }
+
       // Removes the cache if last process connected.
       virtual ~api() {}
       
    private:
-
       impl _impl;
    };
    

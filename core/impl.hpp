@@ -54,7 +54,9 @@ namespace potatocache {
       bool recover_p();
       
       // Open an existing, we have lock and should just check pids.
-      void open();
+      //
+      // returns: process count after open
+      uint32_t open();
       
       // Shared memory just created, need to set up all data structures.
       void create();
@@ -64,7 +66,8 @@ namespace potatocache {
 
       // Dump shared memory content on stdout.
       void dump();
-      
+
+      std::string _name;
       shm _shm;
       config _config;
    };

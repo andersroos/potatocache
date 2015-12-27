@@ -15,8 +15,9 @@ namespace potatocache {
       
       // Size of the shared mem segment to use for the chache.
       uint64_t memory_segment_size = 2 * 1024 * 1024;
+
    };
-   
+
 }
 
 #endif

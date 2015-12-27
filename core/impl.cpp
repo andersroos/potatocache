@@ -8,6 +8,7 @@
 
 #include "shared.hpp"
 #include "utils.hpp"
+#include "log.hpp"
 #include "os.hpp"
 #include "impl.hpp"
 #include "config.hpp"
@@ -38,6 +39,7 @@ namespace potatocache {
    
    impl::impl(const std::string& name,
               const config& config) :
+      _name(name),
       _shm(name),
       _config(config)
    {
@@ -62,7 +64,9 @@ namespace potatocache {
                   _shm.remove();
                   continue;
                }
-               open();
+               auto process_count = open();
+               LOG_INFO("Opened cache '%s', size is %d bytes, %d proceses attached.", name.c_str(), _shm.size(),
+                        process_count);
                return;
             }
             catch (const system_error& e) {
@@ -76,6 +80,7 @@ namespace potatocache {
          if (_shm.create(_config.memory_segment_size)) {
             create();
             _shm.unlock();
+            LOG_INFO("Created cache '%s', size is %d bytes.", name.c_str(), _shm.size());
             return;
          }
       }
@@ -247,11 +252,13 @@ namespace potatocache {
                   head.pids[i] = 0;
                   break;
                }
-            }
+            } 
+            LOG_INFO("Closed cache '%s'.", _name.c_str());
             return;
          }
       }
       _shm.remove();
+      LOG_INFO("Removed cache '%s' (was last process attached).", _name.c_str());
    }
 
    // Private methods.
@@ -288,7 +295,7 @@ namespace potatocache {
       }
    }
 
-   void impl::open()
+   uint32_t impl::open()
    {
       op_set set(_shm, op_open);
 
@@ -316,6 +323,7 @@ namespace potatocache {
             }
          }
       }
+      return head.process_count;
    }
 
    void impl::create()
