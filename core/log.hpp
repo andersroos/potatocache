@@ -1,6 +1,4 @@
-
-#ifndef POTATOCACHE_LOG_HPP
-#define POTATOCACHE_LOG_HPP
+#pragma once
 
 #include <stdint.h>
 
@@ -47,5 +45,3 @@ namespace potatocache {
    void set_log_level(const log_level& level);
    
 }
-   
-#endif

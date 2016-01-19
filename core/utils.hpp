@@ -1,5 +1,4 @@
-#ifndef POTATOCACHE_UTILS_HPP
-#define POTATOCACHE_UTILS_HPP
+#pragma once
 
 #include <string.h>
 #include <stdarg.h>
@@ -10,5 +9,3 @@ std::string fmt(const char* format, ...);
 
 // Return the current time in microseconds.
 uint64_t now_us();
-
-#endif

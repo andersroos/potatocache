@@ -1,6 +1,4 @@
-
-#ifndef POTATOCACHE_OS_HPP
-#define POTATOCACHE_OS_HPP
+#pragma once
 
 #include <stdint.h>
 #include <pthread.h>
@@ -109,7 +107,4 @@ namespace potatocache {
    private:
       shm& _shm;
    };
-
 }
-
-#endif

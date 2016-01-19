@@ -1,6 +1,4 @@
-
-#ifndef POTATOCACHE_IMPL_HPP
-#define POTATOCACHE_IMPL_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -73,5 +71,3 @@ namespace potatocache {
    };
    
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef POTATOCACHE_SHARED_HPP
-#define POTATOCACHE_SHARED_HPP
+#pragma once
 
 #include <stdint.h>
 
@@ -95,7 +94,4 @@ namespace potatocache {
       // The value in the block, no termination char.
       char data[BLOCK_SIZE - sizeof(uint64_t)]; 
    };
-
 }
-
-#endif
