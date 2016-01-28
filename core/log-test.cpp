@@ -11,7 +11,7 @@ using namespace std;
 
 BOOST_AUTO_TEST_CASE(test_logging_off)
 {
-   api::set_log_output(NULL);
+   api::set_log_output(nullptr);
    api::set_log_level(log_level::INFO);
    LOG_DEBUG("debug");
    LOG_INFO("info");

@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(test_lock_can_be_taken_on_process_death)
          shm_lock lock(shm);
          BOOST_CHECK_EQUAL(1234, shm.ref<uint32_t>(shm.offset));
       }
-      ::waitpid(child_pid, NULL, 0); 
+      ::waitpid(child_pid, nullptr, 0); 
       shm.remove();
    }
    else {
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(test_getting_pid_and_existance_of_process)
    pid_t child_pid;
    if (child_pid = fork()) {
       // parent
-      ::waitpid(child_pid, NULL, 0); 
+      ::waitpid(child_pid, nullptr, 0); 
       BOOST_CHECK(not shm::process_exists(child_pid));
    }
    else {

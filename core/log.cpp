@@ -12,7 +12,7 @@ using namespace std;
 
 namespace potatocache {
 
-   std::ostream* log_stream = NULL;
+   std::ostream* log_stream = nullptr;
    
    log_level log_level_filter = log_level::INFO;
    
@@ -28,7 +28,7 @@ namespace potatocache {
   
    void log(const uint32_t& level, const char* file, int line, const char* format, ...)
    {
-      if (log_stream == NULL or level > log_level_filter) {
+      if (!log_stream or level > log_level_filter) {
          return;
       }
       
@@ -53,7 +53,7 @@ namespace potatocache {
       struct tm* timeinfo = gmtime_r(&t, &ti);
       char timestamp[20];
       if (timeinfo && !strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", timeinfo)) {
-         // Don't throw an exception here, because it is good if the log line is be printed anyway.
+         // Don't throw an exception here, because it is good if the log line is printed anyway.
          timestamp[0] = '\0'; 
       }
    

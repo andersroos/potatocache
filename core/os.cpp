@@ -24,7 +24,7 @@ namespace potatocache {
 
    char* map(const string& name, uint64_t size, int fd)
    {
-      auto mem = static_cast<char*>(::mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+      auto mem = static_cast<char*>(::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
       if (mem == MAP_FAILED) {
          throw system_error(errno, system_category(), fmt("failed to mmap shared memory section %s", name.c_str()));
       }
@@ -72,7 +72,7 @@ namespace potatocache {
       page_size(::sysconf(_SC_PAGESIZE)),
       _name('/' + name),
       _fd(-1),
-      _mem(NULL)
+      _mem(nullptr)
    {
       auto len = name.size();
       if (len < 1 or 254 < len) {
@@ -238,7 +238,7 @@ namespace potatocache {
    {
       if (_mem) {
          ::munmap(_mem, size());
-         _mem = NULL;
+         _mem = nullptr;
       }
       
       if (_fd != -1) {
