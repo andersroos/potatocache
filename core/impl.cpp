@@ -47,11 +47,10 @@ namespace potatocache {
       required_size = align(required_size + sizeof(hash_entry_t) * _config.size);
       required_size += sizeof(block_t) * _config.size;
 
-      if (required_size > _config.memory_size_initial) {
-         // TODO Fix this in regards to max size.
+      if (_config.memory_size_max != 0 and required_size > _config.memory_size_max) {
          throw std::invalid_argument(fmt("too litte memory configured, absolute minimum size needed is %lu,"
-                                         " configured is %lu, lower size or raise memory",
-                                         required_size, _config.memory_size_initial));
+                                         " configured max is %lu, lower size or raise memory",
+                                         required_size, _config.memory_size_max));
       }
 
       for (uint32_t create_open_try_count = 0; create_open_try_count < 10; ++create_open_try_count) {
@@ -82,7 +81,7 @@ namespace potatocache {
          }
          
          // Try to create if could not open.
-         if (_shm.create(_config.memory_size_initial)) {
+         if (_shm.create(max(required_size, _config.memory_size_initial))) {
             create();
             _shm.unlock();
             LOG_INFO("created cache '%s', size is %d bytes", name.c_str(), _shm.size());
