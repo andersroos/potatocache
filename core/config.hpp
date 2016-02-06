@@ -11,9 +11,13 @@ namespace potatocache {
       // Size in number of entries.
       uint64_t size = 1024;
       
-      // Size of the shared mem segment to use for the chache.
-      uint64_t memory_segment_size = 2 * 1024 * 1024;
+      // Initial size of the shared mem segment to use for the chache, this is also the increment used when resizing the
+      // cache.
+      uint64_t memory_size_initial = 2 * 1024 * 1024;
 
+      // Max size of the shared mem segment to use for the chache. 0 is infinite.
+      uint64_t memory_size_max = 0;
+      
    };
 
 }

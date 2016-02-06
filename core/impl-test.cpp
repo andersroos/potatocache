@@ -23,7 +23,8 @@ BOOST_AUTO_TEST_CASE(test_put_get)
 {
    potatocache::config config;
    config.size = 2;
-   config.memory_segment_size = 8 * 1024;
+   config.memory_size_initial = 8 * 1024;
+   config.memory_size_max = 8 * 1024;
    bool missing;
 
    {
@@ -83,7 +84,8 @@ BOOST_AUTO_TEST_CASE(test_put_get)
       // Free during replace works.
       potatocache::config c;
       c.size = 128;
-      c.memory_segment_size = 16 * 1024;
+      c.memory_size_initial = 16 * 1024;
+      c.memory_size_max = 16 * 1024;
       impl impl(unique_shm_name(), c);
 
       string fillmem(128 * 56, 'x');
@@ -153,11 +155,48 @@ BOOST_AUTO_TEST_CASE(test_put_get)
       // Put a really big piece of data.
       potatocache::config c;
       c.size = 1;
-      c.memory_segment_size = 10 * 1024 * 1024;
+      c.memory_size_initial = 10 * 1024 * 1024;
+      c.memory_size_max = 10 * 1024 * 1024;
       impl impl(unique_shm_name(), c);
 
       string big(8 * 1024 * 1024, 'x');
       impl.put("key", big);
       BOOST_CHECK_EQUAL(big, impl.get("key", missing));
    }
+
+}
+
+BOOST_AUTO_TEST_CASE(test_resize)
+{
+   bool missing;
+
+   {
+      // Fill the memory and expect a resize.
+      potatocache::config c;
+      c.size = 2;
+      c.memory_size_initial = 8 * 1024;
+      c.memory_size_max = 0;
+      impl impl(unique_shm_name(), c);
+
+      string big(10 * 1024, 'x');
+      impl.put("key", big);
+      BOOST_CHECK_EQUAL(big, impl.get("key", missing));
+      // TODO Check size here when stats is implemented.
+   }   
+
+   {
+      // Fill the memory and expect one, resize, but then it should be full.
+      potatocache::config c;
+      c.size = 2;
+      c.memory_size_initial = 8 * 1024;
+      c.memory_size_max = 16 * 1024;
+      impl impl(unique_shm_name(), c);
+
+      string big(10 * 1024, 'x');
+      
+      impl.put("key1", big);
+      BOOST_CHECK_THROW(impl.put("key2", big), length_error);
+      BOOST_CHECK_EQUAL(big, impl.get("key1", missing));
+      // TODO Check size here when stats is implemented.
+   }   
 }
