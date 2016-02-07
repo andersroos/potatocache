@@ -22,6 +22,7 @@ namespace potatocache {
    // Local functions.
    //
 
+   // Call mmap and handle errors.
    char* map(const string& name, uint64_t size, int fd)
    {
       auto mem = static_cast<char*>(::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
@@ -72,7 +73,8 @@ namespace potatocache {
       page_size(::sysconf(_SC_PAGESIZE)),
       _name('/' + name),
       _fd(-1),
-      _mem(nullptr)
+      _mem(nullptr),
+      _size(0)
    {
       auto len = name.size();
       if (len < 1 or 254 < len) {
@@ -108,6 +110,7 @@ namespace potatocache {
          }
 
          _mem = map(_name, size, _fd);
+         _size = size;
 
          ::memset(_mem, 0, size);
 
@@ -137,7 +140,7 @@ namespace potatocache {
          }
          _fd = fd;
 
-         auto size = shm::size();
+         auto size = shm::stat_size();
          if (size < offset) {
             // Creating process in the middle of resizing or memory section in broken state. Clean up and return false
             // for later retry.
@@ -145,6 +148,7 @@ namespace potatocache {
             return false;
          }
          _mem = map(_name, size , _fd);
+         _size = size;
          
       }
       catch (const system_error& e) {
@@ -170,7 +174,7 @@ namespace potatocache {
       }
    }
 
-   uint64_t shm::size()
+   uint64_t shm::stat_size()
    {
       struct stat s;
       if (::fstat(_fd, &s) < 0) {
@@ -237,8 +241,9 @@ namespace potatocache {
    void shm::close()
    {
       if (_mem) {
-         ::munmap(_mem, size());
+         ::munmap(_mem, _size);
          _mem = nullptr;
+         _size = 0;
       }
       
       if (_fd != -1) {

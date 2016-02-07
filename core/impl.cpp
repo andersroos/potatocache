@@ -130,6 +130,10 @@ namespace potatocache {
          }
       }
 
+      // Now check size to see if we need to resize.
+
+      
+      
       // Free old value.
       
       if (entry->value_index != -1) {
@@ -285,13 +289,18 @@ namespace potatocache {
             return true;
             
          case op_create:
-            // Create here means we have hit a super small create timing window or a dead creato, not recoverable.
+            // Create here means we have hit a super small create timing window or a dead creator, not recoverable.
             return false;
             
          case op_init:
             // We have a dead creator, not recoverable.
             return false;
 
+         case op_resize:
+            // TODO
+            // Make sure all pointers in the resized memory is set up correctly or do it.
+            throw logic_error("resize recover not implemented");
+            
             // TODO Complete all revocery.
             
          default:

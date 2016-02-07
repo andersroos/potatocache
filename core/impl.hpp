@@ -64,7 +64,10 @@ namespace potatocache {
 
       // Dump shared memory content on stdout.
       void dump();
-
+ 
+      // Return the size in bytes of the mapped section (not the same as the shared memory size).
+      uint64_t size() { return _shm.size(); }
+     
       std::string _name;
       shm _shm;
       config _config;

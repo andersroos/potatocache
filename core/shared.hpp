@@ -18,6 +18,11 @@ namespace potatocache {
 
       // No operation in progress. After getting lock, this should be the operation or recovery is needed.
       op_noop,
+
+      // This is a special one. During a resize operation the lock will be relased because the mutex can't be locked
+      // while munmapping, thus after increasing the memory unlocking will be done and another process may need to init
+      // the memory if it manages to munmap and mmap before the original process.
+      op_resize,
       
       // Initalization after create is in progress.
       op_init,

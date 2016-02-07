@@ -45,10 +45,13 @@ namespace potatocache {
       // throws: std::system_error if failed to remove (will not throw if already removed)
       void remove();
 
-      // Get the current size of the shared memory section.
+      // Get the actual current size of the shared memory section by calling stat.
       //
       // throws: std::system_error if failed to get size
-      uint64_t size();
+      uint64_t stat_size();
+
+      // Get the current mapped size of the shared memory section.
+      uint64_t size() { return _size; }
       
       // Get a object pointer based on a byte.
       template<class T> inline
@@ -89,6 +92,7 @@ namespace potatocache {
       std::string _name;
       int _fd;
       char* _mem;
+      uint64_t _size;
    };
    
    // Used to lock shm with raii.

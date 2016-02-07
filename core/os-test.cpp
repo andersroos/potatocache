@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(test_lock_can_be_taken_on_process_death)
       while (not shm.open()) { usleep(100); }
       {
          shm_lock lock(shm);
-         BOOST_CHECK_EQUAL(1234, shm.ref<uint32_t>(shm.offset));
+         // if test did not hang here it was a success
       }
       ::waitpid(child_pid, nullptr, 0); 
       shm.remove();
@@ -75,7 +75,6 @@ BOOST_AUTO_TEST_CASE(test_lock_can_be_taken_on_process_death)
       // child
       shm shm(name);
       shm.create(256);
-      shm.ref<uint32_t>(shm.offset) = 1234;
       // no unlock because we are testing it
       exit(0);
    }
@@ -112,7 +111,7 @@ BOOST_AUTO_TEST_CASE(test_size_on_non_existent_shared_memory_section_throws)
    string name(unique_shm_name());
 
    shm shm(name);
-   BOOST_CHECK_THROW(shm.size(), system_error);
+   BOOST_CHECK_THROW(shm.stat_size(), system_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_getting_pid_and_existance_of_process)
