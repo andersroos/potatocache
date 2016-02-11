@@ -180,50 +180,53 @@ BOOST_AUTO_TEST_CASE(test_resize)
 
       BOOST_CHECK_EQUAL(c.memory_size_initial, impl.size());
       
-      string big(10 * 1024, 'x');
+      string big(6 * 1024, 'x');
       impl.put("key", big);
       BOOST_CHECK_EQUAL(big, impl.get("key", missing));
       
       BOOST_CHECK_EQUAL(c.memory_size_initial * 2, impl.size());
    }   
+ 
+    {
+       // Fill the memory and expect two resize, but then it should be full.
+       potatocache::config c;
+       c.size = 2;
+       c.memory_size_initial = 8 * 1024;
+       c.memory_size_max = 32 * 1024;
+       impl impl(unique_shm_name(), c);
+ 
+       BOOST_CHECK_EQUAL(c.memory_size_initial, impl.size());
+       
+       string big(10 * 1024, 'x');
+       impl.put("key1", big);
+       BOOST_CHECK_THROW(impl.put("key2", big), length_error);
+       
+       BOOST_CHECK_EQUAL(big, impl.get("key1", missing));
+       BOOST_CHECK_EQUAL(c.memory_size_max, impl.size());
+    }   
+ 
+    {
+       // Make sure the resize propagates to another instance of the shared mem.
+       string name(unique_shm_name());
+       
+       potatocache::config c;
+       c.size = 2;
+       c.memory_size_initial = 8 * 1024;
+       c.memory_size_max = 16 * 1024;
+       
+       impl impl1(name, c);
+ 
+       impl impl2(name, c);
+       
+       string big(6 * 1024, 'x');
+       
+       impl1.put("key", big);
+ 
+       BOOST_CHECK_EQUAL(c.memory_size_max, impl1.size());
 
-   {
-      // Fill the memory and expect one, resize, but then it should be full.
-      potatocache::config c;
-      c.size = 2;
-      c.memory_size_initial = 8 * 1024;
-      c.memory_size_max = 16 * 1024;
-      impl impl(unique_shm_name(), c);
-
-      BOOST_CHECK_EQUAL(c.memory_size_initial, impl.size());
-      
-      string big(10 * 1024, 'x');
-      impl.put("key1", big);
-      BOOST_CHECK_THROW(impl.put("key2", big), length_error);
-      
-      BOOST_CHECK_EQUAL(big, impl.get("key1", missing));
-      BOOST_CHECK_EQUAL(c.memory_size_max, impl.size());
-   }   
-
-   {
-      // Make sure the resize propagates to another instance of the shared mem.
-      string name(unique_shm_name());
-      
-      potatocache::config c;
-      c.size = 2;
-      c.memory_size_initial = 8 * 1024;
-      c.memory_size_max = 16 * 1024;
-      
-      impl impl1(name, c);
-
-      impl impl2(name, c);
-      
-      string big(10 * 1024, 'x');
-      
-      impl1.put("key", big);
-
-      BOOST_CHECK_EQUAL(c.memory_size_max, impl1.size());
-      BOOST_CHECK_EQUAL(big, impl2.get("key", missing));
-      BOOST_CHECK_EQUAL(c.memory_size_max, impl2.size());
-   }   
+       // TODO Need to implement size check at every operation for this to work.
+       
+       BOOST_CHECK_EQUAL(big, impl2.get("key", missing));
+       BOOST_CHECK_EQUAL(c.memory_size_max, impl2.size());
+    }   
 }

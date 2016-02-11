@@ -104,7 +104,7 @@ namespace potatocache {
 
       shm_lock lock(_shm);
       if (not recover_p()) {
-         // TODO What todo if irrecoverrable here? Reinit? Or does recover do that?
+         // TODO What todo if irrecoverrable here? Reinit? Or does recover do that? Raise?
       }
 
       auto& head = impl::head();
@@ -136,7 +136,9 @@ namespace potatocache {
 
          head.op = op_resize;
          
-         uint64_t target_size = min(head.mem_size + _config.memory_size_initial, _config.memory_size_max);
+         uint64_t target_size = min(head.mem_size + _config.memory_size_initial,
+                                    _config.memory_size_max ? _config.memory_size_max : UINT64_MAX);
+         
          if (target_size <= head.mem_size) {
             // We can't resize more, bail here.
             head.op = op_noop;
@@ -331,7 +333,7 @@ namespace potatocache {
 
             uint64_t offset_start = block_o(head.blocks_size);
             uint64_t index_start = head.blocks_size;
-            uint64_t index_end = (_shm.size() - offset_start) / sizeof(block_t) + offset_start;
+            uint64_t index_end = (_shm.size() - offset_start) / sizeof(block_t);
 
             if (index_start < index_end) {
                for (auto i = index_start; i < index_end - 1; ++i) {
@@ -339,10 +341,12 @@ namespace potatocache {
                }
                block(index_end - 1).next_block_index = head.free_block_index;
 
-               // TODO Think about order here, death can happen at any time.
+               // TODO Think about order here, death can happen at any time. We may need to detect free blocks and total
+               // number of blocks etc.
                
                head.free_block_index = index_start;
-               head.blocks_size = head.blocks_size + index_start - index_end;
+               head.blocks_free = head.blocks_free + index_end - index_start;
+               head.blocks_size = head.blocks_size + index_end - index_start;
             }
             // TODO Should we set this earlier and use blocks_size or free_block_index?
             head.mem_size = _shm.size();
