@@ -101,18 +101,16 @@ namespace potatocache {
       }
 
       uint32_t hash = impl::hash(key);
-      
+
       shm_lock lock(_shm);
       if (not recover_p()) {
          // TODO What todo if irrecoverrable here? Reinit? Or does recover do that?
       }
-      
-      op_set set(_shm, op_put);
-
-      // Find hash entry.
 
       auto& head = impl::head();
       auto size = head.hash_size;
+      
+      // Find hash entry.
       
       auto hash_i = hash;
       hash_entry_t* entry;
@@ -130,11 +128,39 @@ namespace potatocache {
          }
       }
 
-      // Now check size to see if we need to resize.
+      // Now check size to see if there is size available.
 
-      
+      auto available_size = (head.blocks_free * sizeof(block_t::data)) + entry->value_size;
+      if (available_size < value.length()) {
+         // Resize and then try to put again (resize will release lock so we need to recheck everything).
+
+         head.op = op_resize;
+         
+         uint64_t target_size = min(head.mem_size + _config.memory_size_initial, _config.memory_size_max);
+         if (target_size <= head.mem_size) {
+            // We can't resize more, bail here.
+            head.op = op_noop;
+            throw length_error(fmt("out of value storage, capacity is %u bytes and at max",
+                                   head.blocks_size * sizeof(block_t::data)));
+         }
+
+         // TODO All operations needs to check actual size agains mapped size directly after required lock.
+         
+         _shm.resize(target_size);
+         lock.unlock();
+
+         // TODO Lock thread while doing this (in case multithreaded process). Maybe think about multithreaded in the
+         // whole code.
+         _shm.remap_to_size();
+         
+         // Last part of resize (initializing the new memory will be done by recover_p since we was forced to release
+         // the lock in the middle of this.
+         return put(key, value);
+      }
       
       // Free old value.
+
+      op_set op(_shm, op_put);
       
       if (entry->value_index != -1) {
          // TODO Is putting same value as existing a normal case? maybe check for it?
@@ -156,11 +182,6 @@ namespace potatocache {
       // Insert new value.
 
       int64_t data_size = value.size();
-      if (data_size > int64_t(head.blocks_free * sizeof(block_t::data))) {
-         throw length_error(fmt("out of value storage, capacity is %u bytes",
-                                head.blocks_size * sizeof(block_t::data)));
-      }
-
       const char* data = value.c_str();
       
       entry->value_index = head.free_block_index;
@@ -282,11 +303,13 @@ namespace potatocache {
    
    bool impl::recover_p()
    {
-      switch (head().op) {
+      auto& head = impl::head();
+      
+      switch (head.op) {
 
          case op_noop:
             // The normal case.
-            return true;
+            break;
             
          case op_create:
             // Create here means we have hit a super small create timing window or a dead creator, not recoverable.
@@ -297,15 +320,46 @@ namespace potatocache {
             return false;
 
          case op_resize:
-            // TODO
-            // Make sure all pointers in the resized memory is set up correctly or do it.
-            throw logic_error("resize recover not implemented");
+         {
+            if (head.mem_size == _shm.size()) {
+               // Setting size is the last step, so if it is already done a recovering thread was killed right before
+               // completing recover or before resize was done. Do nothing.
+               break;
+            }
+            
+            // Init new empty blocks.
+
+            uint64_t offset_start = block_o(head.blocks_size);
+            uint64_t index_start = head.blocks_size;
+            uint64_t index_end = (_shm.size() - offset_start) / sizeof(block_t) + offset_start;
+
+            if (index_start < index_end) {
+               for (auto i = index_start; i < index_end - 1; ++i) {
+                  block(i).next_block_index = i + 1;
+               }
+               block(index_end - 1).next_block_index = head.free_block_index;
+
+               // TODO Think about order here, death can happen at any time.
+               
+               head.free_block_index = index_start;
+               head.blocks_size = head.blocks_size + index_start - index_end;
+            }
+            // TODO Should we set this earlier and use blocks_size or free_block_index?
+            head.mem_size = _shm.size();
+            
+            break;
+         }
             
             // TODO Complete all revocery.
             
          default:
-            throw logic_error(fmt("recover could not handle state %d, this is a bug", head().op));
+            throw logic_error(fmt("recover could not handle state %d, this is a bug", head.op));
       }
+
+      // Recover succeded.
+      
+      head.op = op_noop;
+      return true;
    }
 
    uint32_t impl::open()

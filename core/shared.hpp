@@ -64,7 +64,7 @@ namespace potatocache {
       // Start byte of blocks.
       uint64_t blocks_offset;
 
-      // Number of bocks.
+      // Number of blocks.
       uint32_t blocks_size;
       
       // Number of free blocks.
@@ -93,10 +93,10 @@ namespace potatocache {
    // Memory block for storing values.
    struct block_t {
 
-      // Index of next block, -1 if no more blocks in value (size is also usable).
+      // Index of next block, -1 if no more blocks in value (size is also usable for this).
       int64_t next_block_index;
 
       // The value in the block, no termination char.
-      char data[BLOCK_SIZE - sizeof(uint64_t)]; 
+      char data[BLOCK_SIZE - sizeof(int64_t)]; 
    };
 }

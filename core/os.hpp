@@ -35,7 +35,7 @@ namespace potatocache {
 
       // Open existing shared memory.
       //
-      // returns: true if opened, false if it did not exist or if not yet  resized (= try again)
+      // returns: true if opened, false if it did not exist or if not yet sized (= try again)
       //
       // throws: std::system_error if it failed to open
       bool open();
@@ -45,21 +45,33 @@ namespace potatocache {
       // throws: std::system_error if failed to remove (will not throw if already removed)
       void remove();
 
+      // Resize the shared memory segment to size, can only increase size. Recommended that is locked when doing it.
+      // 
+      // size: size in bytes to increase to
+      //
+      // throws: std::invalid_argument if current size is less than size, std::system_error if failed to resize
+      void resize(uint64_t size);
+
+      // Remap the memory segment to it's actual size. Can't be locked when calling this method.
+      //
+      // throws: std::system_error if failed to resize
+      void remap_to_size();
+      
       // Get the actual current size of the shared memory section by calling stat.
       //
       // throws: std::system_error if failed to get size
       uint64_t stat_size();
 
       // Get the current mapped size of the shared memory section.
-      uint64_t size() { return _size; }
+      uint64_t size() const { return _size; }
       
       // Get a object pointer based on a byte.
       template<class T> inline
-      T* ptr(uint64_t byte_offset) { return reinterpret_cast<T*>(_mem + byte_offset); }
+      T* ptr(uint64_t byte_offset) const { return reinterpret_cast<T*>(_mem + byte_offset); }
 
       // Get a object reference based on a byte.
       template<class T> inline
-      T& ref(uint64_t byte_offset) { return *reinterpret_cast<T*>(_mem + byte_offset); }
+      T& ref(uint64_t byte_offset) const { return *reinterpret_cast<T*>(_mem + byte_offset); }
 
       // Lock shared memory section.
       //
@@ -86,6 +98,9 @@ namespace potatocache {
       
    private:
 
+      // Munmap if mapped.
+      void munmap();
+      
       // Try to close and clean up as much as possible.
       void close();
       
@@ -95,20 +110,30 @@ namespace potatocache {
       uint64_t _size;
    };
    
-   // Used to lock shm with raii.
+   // Used to lock shm with raii. Will always unlock if not explicitly unlocked.
    struct shm_lock
    {
-      shm_lock(shm& shm) : _shm(shm)
+      shm_lock(shm& shm) : _shm(shm), _locked(false)
       {
          _shm.lock();
+         _locked = true;
+      }
+
+      void unlock()
+      {
+         if (_locked) {
+            _shm.unlock();
+            _locked = false;
+         }
       }
 
       virtual ~shm_lock()
       {
-         _shm.unlock();
+         unlock();
       }
 
    private:
       shm& _shm;
+      bool _locked;
    };
 }

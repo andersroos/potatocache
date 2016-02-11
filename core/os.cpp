@@ -159,6 +159,20 @@ namespace potatocache {
       return true;
    }
 
+   void shm::resize(uint64_t size)
+   {
+      if (::ftruncate(_fd, size) < 0) {
+         throw system_error(errno, system_category(), fmt("failed to set size of shared object", _name.c_str()));
+      }      
+   }
+
+   void shm::remap_to_size()
+   {
+      // TODO Implement better? Handle reties?
+      close();
+      open();
+   }
+   
    void shm::remove()
    {
       if (_mem) {
@@ -238,13 +252,18 @@ namespace potatocache {
       close();
    }
 
-   void shm::close()
+   void shm::munmap()
    {
       if (_mem) {
          ::munmap(_mem, _size);
          _mem = nullptr;
          _size = 0;
       }
+   }
+   
+   void shm::close()
+   {
+      munmap();
       
       if (_fd != -1) {
          ::close(_fd);

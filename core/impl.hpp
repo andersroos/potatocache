@@ -29,7 +29,7 @@ namespace potatocache {
       //
 
       // Acces mem header.
-      inline mem_header_t& head() { return _shm.ref<mem_header_t>(_shm.offset); }
+      inline mem_header_t& head() const { return _shm.ref<mem_header_t>(_shm.offset); }
 
       // Access hash entry (head needs to be initialized first).
       inline hash_entry_t& entry(uint64_t index)
@@ -37,10 +37,16 @@ namespace potatocache {
          return _shm.ref<hash_entry_t>(head().hash_offset + sizeof(hash_entry_t) * index);
       }
 
-      // Access block (head needs to be initialized first).
-      inline block_t& block(uint64_t index)
+      // Return the byte offset for the block.
+      inline uint64_t block_o(uint64_t index) const
       {
-         return _shm.ref<block_t>(head().blocks_offset + sizeof(block_t) * index);
+         return head().blocks_offset + sizeof(block_t) * index;
+      }
+      
+      // Access block (head needs to be initialized first).
+      inline block_t& block(uint64_t index) const
+      {
+         return _shm.ref<block_t>(block_o(index));
       }
       
       // Return page aligned offset.
